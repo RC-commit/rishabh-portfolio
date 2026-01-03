@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0a0a0a;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: white;
+}
