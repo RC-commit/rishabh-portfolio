@@ -504,7 +504,7 @@ export function Hero() {
                   <div className="w-full h-full rounded-full bg-[#141414]"></div>
                 </motion.div>
                 
-                <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-[#141414]">
+                <div className="relative w-40 h-40 rounded-full overflow-hidden border-4 border-[#141414]">
                   <ImageWithFallback 
                     src="/profile.png"
                     alt="Rishabh Chaturvedi"
