@@ -5,6 +5,7 @@ import { Skills } from './components/Skills';
 import { Projects } from './components/Projects';
 import { Contact } from './components/Contact';
 import { Toaster } from 'sonner';
+import { Analytics } from '@vercel/analytics/react';
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
       <Projects />
       <Contact />
       <Toaster position="bottom-right" theme="dark" />
+      <Analytics />
     </div>
   );
 }
