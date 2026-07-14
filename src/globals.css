@@ -1,76 +1,406 @@
 @import "tailwindcss";
 @custom-variant dark (&:is(.dark *));
 
+/* ==========================================================================
+   PORTFOLIO — DESIGN SYSTEM
+   ========================================================================== */
+
 :root {
+  color-scheme: dark;
+
+  /* ── Typography ───────────────────────────────────────────────────────── */
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-display:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+    "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-mono:
+    "IBM Plex Mono", "JetBrains Mono", "SF Mono", "Fira Code", "Cascadia Code",
+    monospace;
+  --cp-sans: var(--font-sans);
+  --cp-disp: var(--font-display);
+  --cp-mono: var(--font-mono);
   --font-size: 16px;
-  --background: #0a0a0a;
-  --foreground: #fafafa;
-  --card: #141414;
-  --card-foreground: #fafafa;
-  --popover: #141414;
-  --popover-foreground: #fafafa;
+
+  /* ── Background Layers (deepest → elevated) ───────────────────────────── */
+  --bg-root: #090a0c;
+  --bg-surface: #0d1014;
+  --bg-raised: #14181d;
+  --bg-overlay: #1a2026;
+  --bg-code: #080b0e;
+
+  /* ── Text Hierarchy ───────────────────────────────────────────────────── */
+  --text-primary: #f3f5f7;
+  --text-secondary: rgba(222, 228, 234, 0.84);
+  --text-muted: #9ca8b4;
+  --text-ghost: rgba(176, 187, 198, 0.76);
+
+  /* ── Accent Palette (curated, not generic) ────────────────────────────── */
+  --accent-violet: #9b8afb;
+  --accent-fuchsia: #b7a6ff;
+  --accent-blue: #7bc7e3;
+  --accent-cyan: #48c7d9;
+  --accent-emerald: #43c59e;
+  --accent-amber: #fbbf24;
+  --accent-rose: #fb7185;
+  --focus-ring: var(--accent-cyan);
+
+  /* ── Semantic Colors ──────────────────────────────────────────────────── */
+  --success: #22c55e;
+  --warning: #eab308;
+  --error: #ef4444;
+  --info: #3b82f6;
+
+  /* ── Borders ──────────────────────────────────────────────────────────── */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-default: rgba(255, 255, 255, 0.12);
+  --border-hover: rgba(72, 199, 217, 0.34);
+  --border-active: var(--accent-violet);
+
+  /* ── Radii ────────────────────────────────────────────────────────────── */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-full: 9999px;
+
+  /* ── Shadows ──────────────────────────────────────────────────────────── */
+  --shadow-sm: 0 10px 24px rgba(1, 4, 10, 0.32);
+  --shadow-md: 0 22px 48px rgba(1, 4, 12, 0.45);
+  --shadow-lg: 0 36px 90px rgba(1, 4, 14, 0.65);
+  --shadow-glow: 0 0 32px rgba(72, 199, 217, 0.12);
+  --shadow-glow-lg: 0 0 72px rgba(155, 138, 251, 0.16);
+
+  /* ── Liquid Glass Material Scale ─────────────────────────────────────── */
+  --lg-bg: var(--bg-root);
+  --lg-bg-deep: #060709;
+  --lg-text: var(--text-primary);
+  --lg-text-soft: var(--text-secondary);
+  --lg-text-muted: rgba(172, 183, 194, 0.72);
+  --lg-accent: var(--accent-violet);
+  --lg-accent-2: var(--accent-cyan);
+  --lg-teal: var(--accent-emerald);
+  --lg-violet: var(--accent-violet);
+  --lg-panel-fill:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.018)),
+    rgba(13, 16, 20, 0.58);
+  --lg-bar-fill:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.026)),
+    rgba(13, 16, 20, 0.66);
+  --lg-sidebar-fill:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.015)),
+    rgba(10, 12, 15, 0.74);
+  --lg-sidebar-filter: blur(28px) saturate(180%) brightness(1.02);
+  --lg-topbar-fill:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    rgba(10, 12, 15, 0.72);
+  --lg-topbar-filter: blur(20px) saturate(170%) brightness(1.03);
+  --lg-card-fill:
+    linear-gradient(150deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    rgba(14, 17, 21, 0.74);
+  --lg-card-fill-hover:
+    linear-gradient(150deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    rgba(21, 25, 30, 0.82);
+  --lg-control-fill:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.048)),
+    rgba(18, 22, 27, 0.72);
+  --lg-modal-fill:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.052)),
+    rgba(16, 20, 24, 0.88);
+  --lg-rim: rgba(255, 255, 255, 0.18);
+  --lg-rim-strong: rgba(255, 255, 255, 0.30);
+  --lg-rim-soft: rgba(255, 255, 255, 0.10);
+  --lg-filter-panel: blur(14px) saturate(165%) brightness(1.04);
+  --lg-filter-card: blur(18px) saturate(170%) brightness(1.06);
+  --lg-filter-control: blur(22px) saturate(175%) brightness(1.07);
+  --lg-filter-modal: blur(26px) saturate(180%) brightness(1.08);
+  --lg-shadow-panel:
+    0 28px 82px rgba(0, 0, 0, 0.30),
+    0 8px 26px rgba(0, 0, 0, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.14);
+  --lg-shadow-card:
+    0 20px 58px rgba(0, 0, 0, 0.32),
+    0 6px 18px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    inset 1px 0 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.16);
+  --lg-shadow-card-hover:
+    0 26px 72px rgba(0, 0, 0, 0.38),
+    0 8px 24px rgba(0, 0, 0, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.46),
+    inset 1px 0 0 rgba(255, 255, 255, 0.10),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18);
+  --lg-radius-panel: 24px;
+  --lg-radius-card: 20px;
+  --lg-radius-control: 999px;
+
+  --diagram-canvas: rgba(255, 255, 255, 0.95);
+  --surface-glass: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.08),
+      rgba(255, 255, 255, 0.03)
+    ),
+    rgba(13, 16, 20, 0.76);
+  --surface-glass-hover: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.11),
+      rgba(255, 255, 255, 0.04)
+    ),
+    rgba(20, 24, 29, 0.86);
+  --panel-surface: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.07),
+      rgba(255, 255, 255, 0.02)
+    ),
+    rgba(13, 16, 20, 0.88);
+  --panel-hover: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.1),
+      rgba(255, 255, 255, 0.03)
+    ),
+    rgba(20, 24, 29, 0.9);
+  --panel-border: color-mix(in srgb, var(--border-subtle) 92%, transparent);
+  --panel-border-strong: color-mix(
+    in srgb,
+    var(--border-hover) 88%,
+    transparent
+  );
+  --panel-shadow:
+    0 24px 70px rgba(2, 6, 16, 0.45),
+    0 8px 24px rgba(2, 6, 16, 0.35);
+
+  --noise-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  --hero-gradient: linear-gradient(
+      145deg,
+      rgba(72, 199, 217, 0.1),
+      rgba(155, 138, 251, 0.08) 38%,
+      rgba(67, 197, 158, 0.06) 62%,
+      rgba(9, 10, 12, 0.94)
+    ),
+    radial-gradient(
+      circle at 18% 18%,
+      rgba(72, 199, 217, 0.12),
+      transparent 34%
+    )
+  ;
+  --hero-border: color-mix(
+    in srgb,
+    var(--accent-blue) 22%,
+    var(--border-default)
+  );
+  --hero-shadow:
+    0 36px 110px rgba(2, 6, 18, 0.62),
+    0 0 80px rgba(72, 199, 217, 0.09);
+  --topbar-surface: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.07),
+      rgba(255, 255, 255, 0.02)
+    ),
+    rgba(9, 11, 14, 0.8);
+  --sidebar-surface: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.04),
+    rgba(9, 11, 14, 0.82) 18%,
+    rgba(9, 10, 12, 0.94) 100%
+  );
+  --sidebar-shadow:
+    inset -1px 0 0 rgba(255, 255, 255, 0.08),
+    18px 0 56px rgba(2, 6, 18, 0.58);
+  --sidebar-nav-hover-bg: color-mix(
+    in srgb,
+    var(--accent-blue) 14%,
+    transparent
+  );
+  --sidebar-nav-active-bg: linear-gradient(
+    92deg,
+    color-mix(in srgb, var(--accent-blue) 18%, transparent),
+    color-mix(in srgb, var(--accent-violet) 14%, transparent)
+  );
+  --sidebar-nav-active-border: color-mix(
+    in srgb,
+    var(--accent-blue) 32%,
+    var(--border-default)
+  );
+  --sidebar-nav-text: rgba(198, 210, 233, 0.78);
+  --sidebar-nav-text-active: var(--text-primary);
+  --sidebar-nav-indicator: var(--accent-blue);
+  --mobile-nav-surface: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.05),
+      rgba(255, 255, 255, 0.02)
+    ),
+    rgba(9, 11, 14, 0.94);
+
+  --scroll-thumb: rgba(255, 255, 255, 0.14);
+  --scroll-thumb-hover: rgba(255, 255, 255, 0.24);
+
+  /* ── Spacing (4px grid) ───────────────────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* ── Transitions ──────────────────────────────────────────────────────── */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+
+  /* ── Legacy compat (Tailwind/shadcn) ──────────────────────────────────── */
+  --background: var(--bg-root);
+  --foreground: var(--text-primary);
+  --card: var(--bg-surface);
+  --card-foreground: var(--text-primary);
+  --popover: var(--bg-overlay);
+  --popover-foreground: var(--text-primary);
   --primary: #f5f5f5;
-  --primary-foreground: #0a0a0a;
-  --secondary: #1f1f1f;
-  --secondary-foreground: #fafafa;
-  --muted: #1f1f1f;
-  --muted-foreground: #a1a1a1;
-  --accent: #8b5cf6;
-  --accent-foreground: #fafafa;
-  --destructive: #ef4444;
-  --destructive-foreground: #fafafa;
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.1);
-  --input-background: #1f1f1f;
-  --switch-background: #2f2f2f;
+  --primary-foreground: var(--bg-root);
+  --secondary: var(--bg-raised);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--bg-raised);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--accent-violet);
+  --accent-foreground: var(--text-primary);
+  --destructive: var(--error);
+  --destructive-foreground: var(--text-primary);
+  --border: var(--border-default);
+  --input: var(--border-default);
+  --input-background: var(--bg-raised);
+  --switch-background: var(--bg-overlay);
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: #8b5cf6;
-  --chart-1: #8b5cf6;
-  --chart-2: #06b6d4;
-  --chart-3: #ec4899;
-  --chart-4: #f59e0b;
-  --chart-5: #10b981;
-  --radius: 0.75rem;
-  --sidebar: #0a0a0a;
-  --sidebar-foreground: #fafafa;
-  --sidebar-primary: #8b5cf6;
-  --sidebar-primary-foreground: #fafafa;
-  --sidebar-accent: #1f1f1f;
-  --sidebar-accent-foreground: #fafafa;
-  --sidebar-border: rgba(255, 255, 255, 0.1);
-  --sidebar-ring: #8b5cf6;
+  --ring: var(--accent-violet);
+  --chart-1: var(--accent-violet);
+  --chart-2: var(--accent-cyan);
+  --chart-3: var(--accent-rose);
+  --chart-4: var(--accent-amber);
+  --chart-5: var(--accent-emerald);
+  --radius: var(--radius-lg);
+  --sidebar: var(--bg-root);
+  --sidebar-foreground: var(--text-primary);
+  --sidebar-primary: var(--accent-violet);
+  --sidebar-primary-foreground: var(--text-primary);
+  --sidebar-accent: var(--bg-raised);
+  --sidebar-accent-foreground: var(--text-primary);
+  --sidebar-border: var(--border-default);
+  --sidebar-ring: var(--accent-violet);
+}
+
+/* ==========================================================================
+   APPLE LIQUID GLASS UTILITY (visionOS Frosted Glass 2.0)
+   Deep frosted translucency with physically-modeled rim lighting,
+   micro noise texture, and mouse-tracked chromatic specular highlight.
+   ========================================================================== */
+
+.apple-glass {
+  /* Level 3: Premium Floating Cards (Hero, Projects, Contact) */
+  background: linear-gradient(
+    150deg,
+    rgba(255, 255, 255, 0.07) 0%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  backdrop-filter: blur(20px) saturate(170%) brightness(1.06);
+  -webkit-backdrop-filter: blur(20px) saturate(170%) brightness(1.06);
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  box-shadow:
+    /* Deep primary drop shadow simulating float */
+    0 28px 70px rgba(0, 0, 0, 0.42),
+    0 8px 24px rgba(0, 0, 0, 0.22),
+    /* Top caustic rim highlight (Apple's signature physical lighting) */
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.50),
+    /* Left caustic side rim highlight */
+    inset 1px 0 0 rgba(255, 255, 255, 0.12),
+    /* Full inner border glow */
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    /* Bottom dark rim for ground shading */
+    inset 0 -1.5px 0 rgba(0, 0, 0, 0.25);
+  position: relative;
+  will-change: transform, box-shadow;
+  transition: transform 0.4s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)),
+              box-shadow 0.4s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.apple-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background-image: var(--noise-texture);
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+/* Specular interactive edge-lighting (tracks --mouse-x/y) */
+.apple-glass-interactive {
+  overflow: hidden;
+}
+
+.apple-glass-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    /* Floating shadow expansion on elevation */
+    0 38px 90px rgba(0, 0, 0, 0.54),
+    0 12px 32px rgba(0, 0, 0, 0.28),
+    /* Dynamic caustic rim enhancement */
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.65),
+    inset 1px 0 0 rgba(255, 255, 255, 0.18),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    inset 0 -1.5px 0 rgba(0, 0, 0, 0.28),
+    /* Restrained cool edge light */
+    0 0 40px rgba(72, 199, 217, 0.1);
+}
+
+.apple-glass-interactive::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.4s var(--ease-out-expo, ease);
+  /* Chromatic dispersion specular — dual-layer for prismatic light split */
+  background:
+    /* Primary white specular hotspot */
+    radial-gradient(
+      420px circle at var(--mouse-x, -999px) var(--mouse-y, -999px),
+      rgba(255, 255, 255, 0.12) 0%,
+      transparent 32%
+    ),
+    /* Cyan-to-violet chromatic fringe (dispersion) */
+    radial-gradient(
+      520px circle at var(--mouse-x, -999px) var(--mouse-y, -999px),
+      rgba(72, 199, 217, 0.055) 8%,
+      rgba(155, 138, 251, 0.045) 35%,
+      transparent 75%
+    );
+}
+
+.apple-glass-interactive:hover::after {
+  opacity: 1;
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #fafafa;
-  --card: #141414;
-  --card-foreground: #fafafa;
-  --popover: #141414;
-  --popover-foreground: #fafafa;
-  --primary: #f5f5f5;
-  --primary-foreground: #0a0a0a;
-  --secondary: #1f1f1f;
-  --secondary-foreground: #fafafa;
-  --muted: #1f1f1f;
-  --muted-foreground: #a1a1a1;
-  --accent: #8b5cf6;
-  --accent-foreground: #fafafa;
-  --destructive: #ef4444;
-  --destructive-foreground: #fafafa;
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.1);
-  --input-background: #1f1f1f;
-  --switch-background: #2f2f2f;
-  --ring: #8b5cf6;
-  --chart-1: #8b5cf6;
-  --chart-2: #06b6d4;
-  --chart-3: #ec4899;
-  --chart-4: #f59e0b;
-  --chart-5: #10b981;
+  --background: var(--bg-root);
+  --foreground: var(--text-primary);
+  --card: var(--bg-surface);
+  --card-foreground: var(--text-primary);
 }
 
+/* ── Tailwind Theme Bridge ──────────────────────────────────────────────── */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -112,203 +442,265 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* ==========================================================================
+   BASE STYLES
+   ========================================================================== */
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
 
+  html {
+    font-family: var(--font-sans);
+    font-size: var(--font-size);
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    background: var(--bg-root);
+  }
+
   body {
-    @apply bg-background text-foreground;
+    min-width: 320px;
+    min-height: 100vh;
+    margin: 0;
+    background-color: var(--bg-root);
+    /* body-gradient is suppressed on the portfolio page; DottedGridBackground owns the BG */
+    background-attachment: fixed;
+    color: var(--text-primary);
+    line-height: 1.7;
+    transition:
+      background-color var(--duration-slow) var(--ease-out-expo),
+      color var(--duration-normal) var(--ease-out-expo);
+  }
+
+  :where(button, a, input, textarea, select) {
+    touch-action: manipulation;
+  }
+
+  :where(
+    a,
+    button,
+    input,
+    textarea,
+    select,
+    [role="button"],
+    [tabindex]
+  ):focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px var(--bg-root),
+      0 0 0 4px color-mix(in srgb, var(--accent-violet) 66%, transparent);
+    border-radius: var(--radius-md);
+  }
+
+  html,
+  body,
+  #root {
+    position: relative;
+  }
+
+  /* ── Code Typography ──────────────────────────────────────────────────── */
+  code,
+  pre,
+  kbd,
+  samp {
+    font-family: var(--font-mono);
+  }
+
+  /* ── Selection ────────────────────────────────────────────────────────── */
+  ::selection {
+    background-color: color-mix(in srgb, var(--accent-violet) 28%, transparent);
+    color: var(--text-primary);
+  }
+
+  /* ── Scrollbar (WebKit) ───────────────────────────────────────────────── */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--scroll-thumb);
+    border-radius: var(--radius-full);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--scroll-thumb-hover);
+  }
+
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scroll-thumb) transparent;
   }
 }
 
-/**
- * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
- */
+/* ── Default Typography ─────────────────────────────────────────────────── */
 @layer base {
   :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
     h1 {
-      font-size: var(--text-2xl);
-      font-weight: var(--font-weight-medium);
-      line-height: 1.5;
+      font-size: 2.25rem;
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: 0;
     }
 
     h2 {
-      font-size: var(--text-xl);
-      font-weight: var(--font-weight-medium);
-      line-height: 1.5;
+      font-size: 1.5rem;
+      font-weight: 600;
+      line-height: 1.3;
+      letter-spacing: 0;
     }
 
     h3 {
-      font-size: var(--text-lg);
-      font-weight: var(--font-weight-medium);
-      line-height: 1.5;
+      font-size: 1.125rem;
+      font-weight: 600;
+      line-height: 1.4;
     }
 
     h4 {
-      font-size: var(--text-base);
-      font-weight: var(--font-weight-medium);
+      font-size: 1rem;
+      font-weight: 500;
       line-height: 1.5;
     }
 
     p {
-      font-size: var(--text-base);
-      font-weight: var(--font-weight-normal);
-      line-height: 1.5;
+      font-size: 1rem;
+      font-weight: 400;
+      line-height: 1.7;
     }
 
     label {
-      font-size: var(--text-base);
-      font-weight: var(--font-weight-medium);
+      font-size: 1rem;
+      font-weight: 500;
       line-height: 1.5;
     }
 
     button {
-      font-size: var(--text-base);
-      font-weight: var(--font-weight-medium);
+      font-size: 1rem;
+      font-weight: 500;
       line-height: 1.5;
     }
 
     input {
-      font-size: var(--text-base);
-      font-weight: var(--font-weight-normal);
+      font-size: 1rem;
+      font-weight: 400;
       line-height: 1.5;
     }
   }
 }
 
-html {
-  font-size: var(--font-size);
+/* ==========================================================================
+   UTILITY CLASSES
+   ========================================================================== */
+
+/* ── Glow Effect ────────────────────────────────────────────────────────── */
+.glow {
+  box-shadow: var(--shadow-glow);
 }
 
-html,
-body,
-#root {
-  position: relative;
-}
-
-/* Hide default cursor */
-.cursor-none,
-.cursor-none * {
-  cursor: none !important;
-}
-
-/* Performance optimizations */
-.will-change-transform {
-  will-change: transform;
-}
-
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Reduce motion for accessibility */
+/* ── Reduced Motion ─────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
+    animation: none !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
 }
 
-/* Custom animations */
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-20px);
-  }
+/* ==========================================================================
+   APP LOADING SHELL
+   ========================================================================== */
+.app-loading-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: var(--lg-text);
+  background: linear-gradient(180deg, var(--lg-bg) 0%, var(--lg-bg-deep) 100%);
 }
 
-@keyframes pulse-glow {
-  0%, 100% {
-    opacity: 1;
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
-  }
-  50% {
-    opacity: 0.8;
-    box-shadow: 0 0 40px rgba(139, 92, 246, 0.8);
-  }
+.app-loading-card {
+  position: relative;
+  z-index: 1;
+  min-width: min(320px, calc(100vw - 48px));
+  padding: 24px;
+  border-radius: var(--lg-radius-panel);
+  background: var(--lg-modal-fill);
+  border: 1px solid var(--lg-rim);
+  box-shadow: var(--lg-shadow-panel);
+  backdrop-filter: var(--lg-filter-modal);
+  -webkit-backdrop-filter: var(--lg-filter-modal);
 }
 
-@keyframes gradient-shift {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+.app-loading-mark {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  margin-bottom: 18px;
+  color: var(--lg-accent);
+  background: var(--lg-control-fill);
+  border: 1px solid var(--lg-rim);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.36);
+  font-weight: 700;
 }
 
-@keyframes spin-slow {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.app-loading-title {
+  margin: 0;
+  font-size: 15px;
+  color: var(--lg-text);
+  letter-spacing: 0.02em;
 }
 
-.animate-float {
-  animation: float 6s ease-in-out infinite;
+.app-loading-subtitle {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--lg-text-muted);
 }
 
-.animate-pulse-glow {
-  animation: pulse-glow 3s ease-in-out infinite;
+.app-loading-track {
+  height: 3px;
+  margin-top: 18px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.09);
 }
 
-.animate-gradient {
-  background-size: 200% 200%;
-  animation: gradient-shift 8s ease infinite;
+.app-loading-track::after {
+  content: '';
+  display: block;
+  width: 42%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, var(--lg-accent), var(--lg-teal), transparent);
+  animation: app-loading-slide 1.35s ease-in-out infinite;
 }
 
-.animate-spin-slow {
-  animation: spin-slow 8s linear infinite;
+/* Shared fixed backdrop used by the portfolio and case-study routes. */
+.dotted-grid-bg {
+  background: var(--bg-root) !important;
 }
 
-@keyframes scroll {
-  0% {
-    transform: translateY(0);
-  }
-  100% {
-    transform: translateY(-100%);
-  }
+.dotted-grid-bg > div:first-of-type {
+  display: none !important;
 }
 
-.animate-scroll {
-  animation: scroll 20s linear infinite;
-}
-
-@keyframes scroll-soft {
-  0% {
-    transform: translateY(0);
-  }
-  100% {
-    transform: translateY(-50%);
-  }
-}
-
-.animate-scroll-soft {
-  animation: scroll-soft 15s linear infinite;
-}
-
-@keyframes scroll {
-  0% {
-    transform: translateY(0);
-  }
-  100% {
-    transform: translateY(-100%);
-  }
-}
-
-.animate-scroll {
-  animation: scroll 20s linear infinite;
+@keyframes app-loading-slide {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(260%); }
 }
