@@ -17,7 +17,12 @@ import {
 } from '../../data/resumeData';
 import { TESTIMONIALS } from '../../data/testimonials';
 import type { PortfolioUIAction } from './types';
-import { LEAD_SCOPE_LABEL, OFFICIAL_CURRENT_TITLE, PUBLIC_RESUME_URL } from '../../data/publicProfile';
+import {
+  LEAD_SCOPE_LABEL,
+  OFFICIAL_CURRENT_TITLE,
+  PUBLIC_PHONE_NUMBER,
+  PUBLIC_RESUME_URL,
+} from '../../data/publicProfile';
 
 // =========================================================
 // Types
@@ -75,7 +80,7 @@ function extractProfileFacts(): FactNode[] {
     },
     {
       id: 'profile-contact',
-      text: `Contact Rishabh through email ${PROFILE.email}, website ${PROFILE.website}, GitHub ${PROFILE.github}, LinkedIn ${PROFILE.linkedin}, or the public resume ${PUBLIC_RESUME_URL}. Personal phone details are private and must not be shared.`,
+      text: `Contact Rishabh by phone at ${PUBLIC_PHONE_NUMBER}, email ${PROFILE.email}, website ${PROFILE.website}, GitHub ${PROFILE.github}, LinkedIn ${PROFILE.linkedin}, or through the public resume ${PUBLIC_RESUME_URL}. Only this published phone number may be shared; any other phone details are private.`,
       category: 'profile',
       meta: {},
     },
@@ -87,7 +92,7 @@ function extractProfileFacts(): FactNode[] {
     },
     {
       id: 'profile-availability',
-      text: `Yes. ${PROFILE.name} is open to Senior and Lead software engineering roles at product companies and startups. He is based in ${PROFILE.location}, is open to remote opportunities, and can be contacted at ${PROFILE.email}.`,
+      text: `Yes. ${PROFILE.name} is open to Senior and Lead software engineering roles at product companies and startups. He is based in ${PROFILE.location}, is open to remote opportunities, and can be contacted at ${PROFILE.email} or ${PUBLIC_PHONE_NUMBER}.`,
       category: 'profile',
       meta: {},
     },

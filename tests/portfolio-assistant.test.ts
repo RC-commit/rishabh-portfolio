@@ -5,6 +5,8 @@ import { CAREER, KEY_METRICS, PROFILE, PROJECTS } from '../src/data/resumeData';
 import {
   LEAD_SCOPE_LABEL,
   OFFICIAL_CURRENT_TITLE,
+  PUBLIC_PHONE_NUMBER,
+  PUBLIC_PHONE_URL,
   PUBLIC_RESUME_URL,
 } from '../src/data/publicProfile';
 import { RCNanoEngine } from '../src/lib/nlp/engine';
@@ -109,19 +111,23 @@ test('keeps quick-action answers distinct and direct', () => {
   assert.match(currentWork.body, /current work.*engineering leadership.*applied AI focus/is);
   assert.notEqual(biggestWin.body, currentWork.body);
   assert.match(availability.body, /^Yes\. Rishabh is open/is);
+  assert.match(availability.body, /7045579215/);
   assert.doesNotMatch(availability.body, /portfolio indicates|according to the portfolio|as mentioned/i);
   assert.deepEqual(availability.uiAction, { action: 'focus_section', value: 'contact' });
 });
 
-test('never returns personal phone data and strips content-owned UI actions', () => {
+test('shares only the published phone number and strips content-owned UI actions', () => {
   const cleaned = redactPrivateContactData('Call +1-202-555-0147 <ui_action action="focus_section" value="contact" />');
   assert.doesNotMatch(cleaned, /2025550147/);
   assert.doesNotMatch(cleaned, /ui_action/);
   assert.match(cleaned, /private phone number/i);
+  assert.equal(redactPrivateContactData(PUBLIC_PHONE_NUMBER), PUBLIC_PHONE_NUMBER);
+  assert.equal(redactPrivateContactData('7045579215'), '7045579215');
 
   const response = getGroundedPortfolioResponse('What is Rishabh\'s phone number?');
-  assert.doesNotMatch(response.body, /2025550147/);
-  assert.match(response.body, /private/i);
+  assert.match(response.body, /7045579215/);
+  assert.match(response.body, new RegExp(PUBLIC_PHONE_URL.replace(/[+]/g, '\\+')));
+  assert.doesNotMatch(response.body, /personal phone number is private/i);
 });
 
 test('redacts formatted, long, and zero-width phone-like sequences without hiding metrics', () => {
@@ -172,6 +178,8 @@ test('keeps headline metrics and role positioning aligned with verified source d
   assert.equal(CAREER[0]?.title, 'Senior Software Engineer');
   assert.equal(LEAD_SCOPE_LABEL, 'Lead Engineer scope');
   assert.equal(PUBLIC_RESUME_URL, PROFILE.resumeUrl);
+  assert.equal(PUBLIC_PHONE_NUMBER, PROFILE.phone);
+  assert.equal(PUBLIC_PHONE_URL, 'tel:+917045579215');
   assert.equal(KEY_METRICS.find((metric) => metric.label === 'Years Experience')?.value, '8+');
   assert.equal(KEY_METRICS.find((metric) => metric.label === 'Engineers Mentored')?.value, '20+');
   assert.deepEqual(CAREER[0].impactMetrics.find((metric) => metric.label === 'Ownership'), {
@@ -283,6 +291,7 @@ test('chat endpoint renders availability as a direct answer', async () => {
   const body = await response.json();
   assert.equal(body.source, 'groq');
   assert.match(body.answer, /^Yes\. Rishabh is open/is);
+  assert.match(body.answer, /7045579215/);
   assert.doesNotMatch(body.answer, /verified portfolio facts|portfolio indicates|personal phone/i);
   assert.deepEqual(body.uiAction, { action: 'focus_section', value: 'contact' });
 });

@@ -41,7 +41,7 @@ export const ExperienceSection = memo(function ExperienceSection({ idPrefix, rol
             }}
           >
             <div>
-              <div className="cp-exp-co">{role.company}</div>
+              <h2 className="cp-exp-co">{role.company}</h2>
               <div className="cp-exp-meta">
                 <span className="cp-exp-role-tag">{role.title}</span>
                 <span className="cp-exp-tenure">{role.period}</span>
@@ -53,6 +53,8 @@ export const ExperienceSection = memo(function ExperienceSection({ idPrefix, rol
             className={`cp-exp-body${isOpen ? ' is-open' : ''}`}
             id={panelId}
             role="region"
+            aria-hidden={!isOpen}
+            inert={!isOpen || undefined}
             aria-label={`${role.company} role details`}
           >
             <div className="cp-exp-body-inner">
@@ -60,7 +62,7 @@ export const ExperienceSection = memo(function ExperienceSection({ idPrefix, rol
                 <div className="cp-exp-col-label">Impact Metrics</div>
                 <div className="cp-exp-metrics-grid">
                   {role.impactMetrics.map((m, mIdx) => (
-                    <TiltedCardWrapper className="cp-exp-metric" key={mIdx} maxTilt={8}>
+                    <TiltedCardWrapper className="cp-exp-metric" key={mIdx} maxTilt={4}>
                       <span className="cp-em-val">{m.value}</span>
                       <span className="cp-em-label">{m.label}</span>
                     </TiltedCardWrapper>

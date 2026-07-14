@@ -1,11 +1,16 @@
-import { memo, useEffect, useRef } from 'react';
+import { memo, useEffect, useId, useRef } from 'react';
 
 /**
  * SVG-based dotted grid background with a radial spotlight mask that follows
  * the cursor. Includes a full-canvas spectral wash, vignette, and noise grain
  * so translucent surfaces have variation to refract without decorative blobs.
  */
-export const DottedGridBackground = memo(function DottedGridBackground() {
+export const DottedGridBackground = memo(function DottedGridBackground({ active = true }: { active?: boolean }) {
+  const idPrefix = useId().replaceAll(':', '');
+  const dimPatternId = `${idPrefix}-dot-pattern-dim`;
+  const brightPatternId = `${idPrefix}-dot-pattern-bright`;
+  const spotlightGradientId = `${idPrefix}-spotlight-grad`;
+  const spotlightMaskId = `${idPrefix}-spotlight-mask`;
   const containerRef = useRef<HTMLDivElement>(null);
   const spotlightGradientRef = useRef<SVGRadialGradientElement>(null);
   const pointerRef = useRef({ x: 0.5, y: 0.5 }); // normalized 0-1
@@ -13,6 +18,8 @@ export const DottedGridBackground = memo(function DottedGridBackground() {
   const rafRef = useRef(0);
 
   useEffect(() => {
+    if (!active) return;
+
     const container = containerRef.current;
     const sg = spotlightGradientRef.current;
     if (!container || !sg) return;
@@ -21,23 +28,8 @@ export const DottedGridBackground = memo(function DottedGridBackground() {
       '(prefers-reduced-motion: reduce)'
     ).matches;
 
-    const onPointerMove = (e: PointerEvent) => {
-      const rect = container.getBoundingClientRect();
-      pointerRef.current = {
-        x: (e.clientX - rect.left) / rect.width,
-        y: (e.clientY - rect.top) / rect.height,
-      };
-    };
-
-    const onPointerLeave = () => {
-      pointerRef.current = { x: 0.5, y: 0.5 };
-    };
-
-    window.addEventListener('pointermove', onPointerMove, { passive: true });
-    window.addEventListener('pointerleave', onPointerLeave);
-    document.addEventListener('mouseleave', onPointerLeave);
-
-    const loop = () => {
+    const renderSpotlight = () => {
+      rafRef.current = 0;
       const tx = pointerRef.current.x;
       const ty = pointerRef.current.y;
       const lerp = reduceMotion ? 1 : 0.08;
@@ -45,24 +37,60 @@ export const DottedGridBackground = memo(function DottedGridBackground() {
       currentRef.current.x += (tx - currentRef.current.x) * lerp;
       currentRef.current.y += (ty - currentRef.current.y) * lerp;
 
-      const cx = (currentRef.current.x * 100).toFixed(2) + '%';
-      const cy = (currentRef.current.y * 100).toFixed(2) + '%';
+      sg.setAttribute('cx', `${(currentRef.current.x * 100).toFixed(2)}%`);
+      sg.setAttribute('cy', `${(currentRef.current.y * 100).toFixed(2)}%`);
 
-      sg.setAttribute('cx', cx);
-      sg.setAttribute('cy', cy);
-
-      rafRef.current = requestAnimationFrame(loop);
+      if (
+        Math.abs(tx - currentRef.current.x) > 0.001
+        || Math.abs(ty - currentRef.current.y) > 0.001
+      ) {
+        rafRef.current = requestAnimationFrame(renderSpotlight);
+      }
     };
 
-    loop();
+    const scheduleSpotlight = () => {
+      if (rafRef.current || document.visibilityState === 'hidden') return;
+      rafRef.current = requestAnimationFrame(renderSpotlight);
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      const rect = container.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      pointerRef.current = {
+        x: (e.clientX - rect.left) / rect.width,
+        y: (e.clientY - rect.top) / rect.height,
+      };
+      scheduleSpotlight();
+    };
+
+    const onPointerLeave = () => {
+      pointerRef.current = { x: 0.5, y: 0.5 };
+      scheduleSpotlight();
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = 0;
+      } else {
+        scheduleSpotlight();
+      }
+    };
+
+    window.addEventListener('pointermove', onPointerMove, { passive: true });
+    window.addEventListener('pointerleave', onPointerLeave);
+    document.addEventListener('mouseleave', onPointerLeave);
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     return () => {
       cancelAnimationFrame(rafRef.current);
+      rafRef.current = 0;
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerleave', onPointerLeave);
       document.removeEventListener('mouseleave', onPointerLeave);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, []);
+  }, [active]);
 
   return (
     <div
@@ -92,7 +120,7 @@ export const DottedGridBackground = memo(function DottedGridBackground() {
         <defs>
           {/* Base dim dot pattern */}
           <pattern
-            id="dot-pattern-dim"
+            id={dimPatternId}
             width="16"
             height="16"
             patternUnits="userSpaceOnUse"
@@ -102,7 +130,7 @@ export const DottedGridBackground = memo(function DottedGridBackground() {
 
           {/* Bright dot pattern — shown only inside spotlight */}
           <pattern
-            id="dot-pattern-bright"
+            id={brightPatternId}
             width="16"
             height="16"
             patternUnits="userSpaceOnUse"
@@ -113,7 +141,7 @@ export const DottedGridBackground = memo(function DottedGridBackground() {
           {/* Radial gradient that moves with the cursor — used as mask */}
           <radialGradient
             ref={spotlightGradientRef}
-            id="spotlight-grad"
+            id={spotlightGradientId}
             cx="50%"
             cy="50%"
             r="22%"
@@ -123,20 +151,20 @@ export const DottedGridBackground = memo(function DottedGridBackground() {
             <stop offset="100%" stopColor="white" stopOpacity="0" />
           </radialGradient>
 
-          <mask id="spotlight-mask">
-            <rect width="100%" height="100%" fill="url(#spotlight-grad)" />
+          <mask id={spotlightMaskId}>
+            <rect width="100%" height="100%" fill={`url(#${spotlightGradientId})`} />
           </mask>
         </defs>
 
         {/* Base dim dots — always visible */}
-        <rect width="100%" height="100%" fill="url(#dot-pattern-dim)" />
+        <rect width="100%" height="100%" fill={`url(#${dimPatternId})`} />
 
         {/* Bright dots — only visible inside the spotlight mask */}
         <rect
           width="100%"
           height="100%"
-          fill="url(#dot-pattern-bright)"
-          mask="url(#spotlight-mask)"
+          fill={`url(#${brightPatternId})`}
+          mask={`url(#${spotlightMaskId})`}
         />
       </svg>
 

@@ -1,12 +1,13 @@
 import { memo } from 'react';
 import { PROFILE } from '../../data/resumeData';
+import { PUBLIC_PHONE_NUMBER, PUBLIC_PHONE_URL } from '../../data/publicProfile';
 import { TiltedCardWrapper } from '../ui/TiltedCardWrapper';
 
 export const ContactSection = memo(function ContactSection() {
   return (
     <>
-      <TiltedCardWrapper className="cp-card-contact" maxTilt={5}>
-        <div className="cp-contact-title">LET&apos;S BUILD</div>
+      <TiltedCardWrapper className="cp-card-contact" maxTilt={3}>
+        <h2 className="cp-contact-title">LET&apos;S BUILD</h2>
         <div className="cp-contact-sub">
           Open to senior / lead roles at product companies and startups building something real. {PROFILE.location}, open to remote.
         </div>
@@ -31,6 +32,28 @@ export const ContactSection = memo(function ContactSection() {
               <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
             </svg>
             {PROFILE.email}
+          </a>
+          <a
+            href={PUBLIC_PHONE_URL}
+            className="cp-contact-btn ghost cp-contact-btn--phone"
+            aria-label={`Call Rishabh at ${PUBLIC_PHONE_NUMBER}`}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="lucide lucide-phone"
+              aria-hidden="true"
+            >
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+            </svg>
+            {PUBLIC_PHONE_NUMBER}
           </a>
           <a
             href={PROFILE.linkedin}

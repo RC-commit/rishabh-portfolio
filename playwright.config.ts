@@ -17,7 +17,7 @@ export default defineConfig({
     { name: 'mobile', use: { ...devices['Pixel 7'] } },
   ],
   webServer: {
-    command: 'npm run dev -- --host 127.0.0.1 --port 5197',
+    command: 'npm run preview -- --host 127.0.0.1 --port 5197',
     url: 'http://127.0.0.1:5197',
     reuseExistingServer: false,
   },

@@ -9,6 +9,7 @@ import {
   type Role,
   type Skill,
 } from '../../data/resumeData';
+import { PUBLIC_PHONE_NUMBER, PUBLIC_PHONE_URL } from '../../data/publicProfile';
 import { TESTIMONIALS } from '../../data/testimonials';
 import { getUIActionForFact, type FactNode } from './factIndex';
 import { hasAnyPhrase, hasNegation, hasPhrase, normalizeForMatch, words } from './matching';
@@ -153,13 +154,14 @@ function classifyIntent(query: string): Intent {
 
 function contactResponse(query: string): SynthesizedResponse {
   const asksForPhone = hasAnyPhrase(query, ['phone', 'phone number', 'mobile number', 'call him', 'whatsapp number']);
-  const privacyNote = asksForPhone
-    ? `Rishabh's personal phone number is private, so I can't provide it. His public contact channels are:`
+  const introduction = asksForPhone
+    ? `Rishabh's published phone number is **${PUBLIC_PHONE_NUMBER}**. His public contact channels are:`
     : `Rishabh's public contact channels are:`;
 
   return answer([
-    privacyNote,
+    introduction,
     '',
+    `- **Phone**: [${PUBLIC_PHONE_NUMBER}](${PUBLIC_PHONE_URL})`,
     `- **Email**: [${PROFILE.email}](mailto:${PROFILE.email})`,
     `- **LinkedIn**: [rishabhjchaturvedi](${PROFILE.linkedin})`,
     `- **GitHub**: [RC-commit](${PROFILE.github})`,
@@ -370,6 +372,7 @@ function intentResponse(intent: Intent, query: string): SynthesizedResponse | nu
         `Yes. Rishabh is open to **Senior and Lead software engineering opportunities**, particularly with product companies and startups building substantial systems.`,
         '',
         `- **Location:** ${PROFILE.location}; open to remote opportunities`,
+        `- **Phone:** [${PUBLIC_PHONE_NUMBER}](${PUBLIC_PHONE_URL})`,
         `- **Email:** [${PROFILE.email}](mailto:${PROFILE.email})`,
         `- **LinkedIn:** [rishabhjchaturvedi](${PROFILE.linkedin})`,
       ].join('\n'), { action: { action: 'focus_section', value: 'contact' }, facts: ['profile-availability'] });

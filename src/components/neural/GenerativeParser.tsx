@@ -1,7 +1,7 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PROFILE, PROJECTS } from '../../data/resumeData';
-import { PUBLIC_RESUME_URL } from '../../data/publicProfile';
+import { PUBLIC_PHONE_URL, PUBLIC_RESUME_URL } from '../../data/publicProfile';
 
 interface GenerativeParserProps {
     content: string;
@@ -14,6 +14,7 @@ const ALLOWED_PUBLIC_LINKS = new Set([
     PROFILE.github,
     PROFILE.linkedin,
     PUBLIC_RESUME_URL,
+    PUBLIC_PHONE_URL,
     `mailto:${PROFILE.email}`,
     ...PROJECTS.map((project) => `/case-studies/${project.slug}`),
 ]);
@@ -21,6 +22,10 @@ const ALLOWED_PUBLIC_LINKS = new Set([
 function isAllowedPublicLink(href?: string) {
     if (!href) return false;
     return ALLOWED_PUBLIC_LINKS.has(href);
+}
+
+function transformPublicLink(href: string) {
+    return isAllowedPublicLink(href) ? href : '';
 }
 
 export function GenerativeParser({ content }: GenerativeParserProps) {
@@ -31,6 +36,7 @@ export function GenerativeParser({ content }: GenerativeParserProps) {
         <div className="cp-markdown">
             <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
+                urlTransform={transformPublicLink}
                 components={{
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     p: ({ node, ...rest }) => <p className="mb" style={{ marginTop: '0.5em', marginBottom: '0.5em' }} {...rest} />,

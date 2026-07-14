@@ -28,7 +28,7 @@ export const EducationSection = memo(function EducationSection({ idPrefix }: { i
             }}
           >
             <div>
-              <div className="cp-exp-co">{edu.institution}</div>
+              <h2 className="cp-exp-co">{edu.institution}</h2>
               <div className="cp-exp-meta">
                 <span className="cp-exp-role-tag">{edu.degree} in {edu.field}</span>
                 <span className="cp-exp-tenure">{edu.period}</span>
@@ -40,13 +40,15 @@ export const EducationSection = memo(function EducationSection({ idPrefix }: { i
             className={`cp-exp-body${isOpen ? ' is-open' : ''}`}
             id={panelId}
             role="region"
+            aria-hidden={!isOpen}
+            inert={!isOpen || undefined}
             aria-label={`${edu.institution} academic details`}
           >
             <div className="cp-exp-body-inner">
               {edu.location && (
-                <div style={{ marginBottom: '12px' }}>
-                  <div className="cp-exp-col-label" style={{ display: 'inline-block', marginRight: '8px' }}>Location:</div>
-                  <span className="cp-exp-tenure" style={{ color: 'var(--cp-t2)' }}>{edu.location}</span>
+                <div className="cp-edu-location">
+                  <div className="cp-exp-col-label cp-edu-location-label">Location:</div>
+                  <span className="cp-exp-tenure cp-edu-location-value">{edu.location}</span>
                 </div>
               )}
               {edu.details && edu.details.length > 0 && (

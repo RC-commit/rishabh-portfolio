@@ -10,7 +10,7 @@ import { memo, useEffect, useRef, useState } from 'react';
  * - Trail alpha smoothly interpolates instead of snapping to prevent visual jumps.
  * - PointerEvent delegation avoids stale refs when rapidly moving between cards.
  */
-export const VisionOSCursor = memo(function VisionOSCursor() {
+export const VisionOSCursor = memo(function VisionOSCursor({ active = true }: { active?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
 
@@ -19,7 +19,7 @@ export const VisionOSCursor = memo(function VisionOSCursor() {
   const snappedAlphaRef = useRef(0); // Smooth alpha interpolation for trail fade
 
   // Comet trail coordinates
-  const TRAIL_LENGTH = 14;
+  const TRAIL_LENGTH = 9;
   const pointsRef = useRef(Array.from({ length: TRAIL_LENGTH }, () => ({ x: -100, y: -100 })));
 
   // Debounce timer for element transitions
@@ -36,7 +36,7 @@ export const VisionOSCursor = memo(function VisionOSCursor() {
     const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
 
     const updateEnabled = () => {
-      setEnabled(hoverQuery.matches && !motionQuery.matches && !connection?.saveData);
+      setEnabled(active && hoverQuery.matches && !motionQuery.matches && !connection?.saveData);
     };
 
     updateEnabled();
@@ -47,7 +47,7 @@ export const VisionOSCursor = memo(function VisionOSCursor() {
       hoverQuery.removeEventListener('change', updateEnabled);
       motionQuery.removeEventListener('change', updateEnabled);
     };
-  }, []);
+  }, [active]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -71,6 +71,14 @@ export const VisionOSCursor = memo(function VisionOSCursor() {
 
     let viewportWidth = window.innerWidth;
     let viewportHeight = window.innerHeight;
+    let animationFrameId = 0;
+    let quietFrames = 0;
+    let loop = () => {};
+
+    const scheduleLoop = () => {
+      if (animationFrameId || document.visibilityState === 'hidden') return;
+      animationFrameId = requestAnimationFrame(loop);
+    };
 
     // Resize canvas to cover the viewport without overspending on dense displays.
     const resizeCanvas = () => {
@@ -84,10 +92,11 @@ export const VisionOSCursor = memo(function VisionOSCursor() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
 
     const handleMouseMove = (e: MouseEvent) => {
       mouseRef.current = { x: e.clientX, y: e.clientY };
+      quietFrames = 0;
+      scheduleLoop();
     };
 
     const handlePointerOver = (e: PointerEvent) => {
@@ -98,6 +107,8 @@ export const VisionOSCursor = memo(function VisionOSCursor() {
         if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
         leaveTimerRef.current = 0;
         activeElementRef.current = null;
+        quietFrames = 0;
+        scheduleLoop();
         return;
       }
 
@@ -115,6 +126,8 @@ export const VisionOSCursor = memo(function VisionOSCursor() {
           leaveTimerRef.current = 0;
         }
         activeElementRef.current = interactive;
+        quietFrames = 0;
+        scheduleLoop();
       }
     };
 
@@ -131,6 +144,8 @@ export const VisionOSCursor = memo(function VisionOSCursor() {
           if (rect.width <= 240 && rect.height <= 80) {
             // Immediately snap to new target — no delay needed
             activeElementRef.current = nextInteractive;
+            quietFrames = 0;
+            scheduleLoop();
             return;
           }
         }
@@ -140,6 +155,8 @@ export const VisionOSCursor = memo(function VisionOSCursor() {
         leaveTimerRef.current = window.setTimeout(() => {
           activeElementRef.current = null;
           leaveTimerRef.current = 0;
+          quietFrames = 0;
+          scheduleLoop();
         }, 60);
       }
     };
@@ -147,29 +164,54 @@ export const VisionOSCursor = memo(function VisionOSCursor() {
     // Release snapping immediately when scrolling to prevent cursor getting stuck
     const handleScroll = () => {
       activeElementRef.current = null;
+      quietFrames = 0;
+      scheduleLoop();
     };
 
     // Tracking mouse entering/leaving the viewport
     const handleMouseLeaveDoc = () => {
       mouseOnScreenRef.current = false;
+      quietFrames = 0;
+      scheduleLoop();
     };
     const handleMouseEnterDoc = () => {
       mouseOnScreenRef.current = true;
+      quietFrames = 0;
+      scheduleLoop();
+    };
+
+    const handleResize = () => {
+      resizeCanvas();
+      quietFrames = 0;
+      scheduleLoop();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = 0;
+      } else {
+        quietFrames = 0;
+        scheduleLoop();
+      }
     };
 
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
     window.addEventListener('pointerover', handlePointerOver, { passive: true });
     window.addEventListener('pointerout', handlePointerOut, { passive: true });
     window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+    window.addEventListener('resize', handleResize);
     document.addEventListener('mouseleave', handleMouseLeaveDoc);
     document.addEventListener('mouseenter', handleMouseEnterDoc);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    let animationFrameId = 0;
-
-    const loop = () => {
+    loop = () => {
+      animationFrameId = 0;
       const mx = mouseRef.current.x;
       const my = mouseRef.current.y;
       const pts = pointsRef.current;
+      let maxMovement = 0;
+      let activeRect: DOMRect | null = null;
 
       // Clean up stale or detached elements
       if (activeElementRef.current) {
@@ -179,6 +221,8 @@ export const VisionOSCursor = memo(function VisionOSCursor() {
           const rect = activeElementRef.current.getBoundingClientRect();
           if (rect.width === 0 && rect.height === 0) {
             activeElementRef.current = null;
+          } else {
+            activeRect = rect;
           }
         }
       }
@@ -188,25 +232,32 @@ export const VisionOSCursor = memo(function VisionOSCursor() {
       if (!mouseOnScreenRef.current) {
         targetAlpha = 0;
       }
+      const previousAlpha = snappedAlphaRef.current;
       snappedAlphaRef.current += (targetAlpha - snappedAlphaRef.current) * 0.12;
+      maxMovement = Math.max(maxMovement, Math.abs(snappedAlphaRef.current - previousAlpha));
 
       // Update comet trail physics
-      if (activeElementRef.current) {
-        const rect = activeElementRef.current.getBoundingClientRect();
-        const cx = rect.left + rect.width / 2;
-        const cy = rect.top + rect.height / 2;
+      const leadX = pts[0].x;
+      const leadY = pts[0].y;
+      if (activeRect) {
+        const cx = activeRect.left + activeRect.width / 2;
+        const cy = activeRect.top + activeRect.height / 2;
         pts[0].x += (cx - pts[0].x) * 0.22;
         pts[0].y += (cy - pts[0].y) * 0.22;
       } else {
         pts[0].x += (mx - pts[0].x) * 0.35;
         pts[0].y += (my - pts[0].y) * 0.35;
       }
+      maxMovement = Math.max(maxMovement, Math.abs(pts[0].x - leadX), Math.abs(pts[0].y - leadY));
 
       // Physics interpolation for trailing segments
       for (let i = 1; i < TRAIL_LENGTH; i++) {
+        const previousX = pts[i].x;
+        const previousY = pts[i].y;
         const ease = 0.36 - i * 0.008;
         pts[i].x += (pts[i - 1].x - pts[i].x) * ease;
         pts[i].y += (pts[i - 1].y - pts[i].y) * ease;
+        maxMovement = Math.max(maxMovement, Math.abs(pts[i].x - previousX), Math.abs(pts[i].y - previousY));
       }
 
       // Clear canvas
@@ -218,8 +269,8 @@ export const VisionOSCursor = memo(function VisionOSCursor() {
       if (trailAlpha > 0.01) {
         for (let i = TRAIL_LENGTH - 1; i >= 0; i--) {
           const t = (TRAIL_LENGTH - i) / TRAIL_LENGTH;
-          const radius = 1.0 + t * 7;
-          const alpha = t * 0.8 * trailAlpha;
+          const radius = 0.8 + t * 3.4;
+          const alpha = t * 0.42 * trailAlpha;
           // Violet lead, cyan middle, emerald tail.
           const progress = i / (TRAIL_LENGTH - 1);
           const hue = progress < 0.5
@@ -228,32 +279,32 @@ export const VisionOSCursor = memo(function VisionOSCursor() {
           const sat = 72;
           const lig = 64;
 
-          const g = ctx.createRadialGradient(pts[i].x, pts[i].y, 0, pts[i].x, pts[i].y, radius * 3.5);
+          const g = ctx.createRadialGradient(pts[i].x, pts[i].y, 0, pts[i].x, pts[i].y, radius * 2.6);
           g.addColorStop(0, `hsla(${hue}, ${sat}%, ${lig}%, ${alpha})`);
           g.addColorStop(1, `hsla(${hue}, ${sat}%, ${lig}%, 0)`);
 
           ctx.beginPath();
-          ctx.arc(pts[i].x, pts[i].y, radius * 3.5, 0, Math.PI * 2);
+          ctx.arc(pts[i].x, pts[i].y, radius * 2.6, 0, Math.PI * 2);
           ctx.fillStyle = g;
           ctx.fill();
         }
 
         // Draw core glow dot on the lead point
-        const og = ctx.createRadialGradient(pts[0].x, pts[0].y, 2, pts[0].x, pts[0].y, 18);
-        og.addColorStop(0, `rgba(72, 199, 217, ${0.26 * trailAlpha})`);
+        const og = ctx.createRadialGradient(pts[0].x, pts[0].y, 1.5, pts[0].x, pts[0].y, 12);
+        og.addColorStop(0, `rgba(72, 199, 217, ${0.18 * trailAlpha})`);
         og.addColorStop(1, 'rgba(72, 199, 217, 0)');
         ctx.beginPath();
-        ctx.arc(pts[0].x, pts[0].y, 18, 0, Math.PI * 2);
+        ctx.arc(pts[0].x, pts[0].y, 12, 0, Math.PI * 2);
         ctx.fillStyle = og;
         ctx.fill();
 
         ctx.beginPath();
-        ctx.arc(pts[0].x, pts[0].y, 4.5, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(155, 138, 251, ${0.9 * trailAlpha})`;
+        ctx.arc(pts[0].x, pts[0].y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(155, 138, 251, ${0.72 * trailAlpha})`;
         ctx.fill();
 
         ctx.beginPath();
-        ctx.arc(pts[0].x, pts[0].y, 2.2, 0, Math.PI * 2);
+        ctx.arc(pts[0].x, pts[0].y, 1.4, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(255, 255, 255, ${trailAlpha})`;
         ctx.fill();
       }
@@ -266,13 +317,12 @@ export const VisionOSCursor = memo(function VisionOSCursor() {
       let targetRadius = '50%';
       let hasActive = false;
 
-      if (activeElementRef.current && mouseOnScreenRef.current) {
+      if (activeElementRef.current && activeRect && mouseOnScreenRef.current) {
         try {
-          const rect = activeElementRef.current.getBoundingClientRect();
-          tx = rect.left;
-          ty = rect.top;
-          tw = rect.width;
-          th = rect.height;
+          tx = activeRect.left;
+          ty = activeRect.top;
+          tw = activeRect.width;
+          th = activeRect.height;
 
           const computedStyle = getComputedStyle(activeElementRef.current);
           targetRadius = computedStyle.borderRadius || '8px';
@@ -289,11 +339,22 @@ export const VisionOSCursor = memo(function VisionOSCursor() {
         ringPos.y = ty;
       }
 
-      const snapEase = 0.24; // Smooth and organic morph easing
+      const previousRingX = ringPos.x;
+      const previousRingY = ringPos.y;
+      const previousRingWidth = ringPos.w;
+      const previousRingHeight = ringPos.h;
+      const snapEase = 0.24;
       ringPos.x += (tx - ringPos.x) * snapEase;
       ringPos.y += (ty - ringPos.y) * snapEase;
       ringPos.w += (tw - ringPos.w) * snapEase;
       ringPos.h += (th - ringPos.h) * snapEase;
+      maxMovement = Math.max(
+        maxMovement,
+        Math.abs(ringPos.x - previousRingX),
+        Math.abs(ringPos.y - previousRingY),
+        Math.abs(ringPos.w - previousRingWidth),
+        Math.abs(ringPos.h - previousRingHeight),
+      );
 
       // Apply the interpolated values to style
       ringEl.style.transform = `translate3d(${ringPos.x}px, ${ringPos.y}px, 0)`;
@@ -302,9 +363,9 @@ export const VisionOSCursor = memo(function VisionOSCursor() {
 
       if (hasActive) {
         ringEl.style.borderRadius = targetRadius;
-        ringEl.style.backgroundColor = 'rgba(255, 255, 255, 0.06)';
-        ringEl.style.borderColor = 'rgba(72, 199, 217, 0.32)';
-        ringEl.style.boxShadow = '0 4px 16px rgba(72, 199, 217, 0.10), inset 0 1px rgba(255, 255, 255, 0.14)';
+        ringEl.style.backgroundColor = 'rgba(255, 255, 255, 0.03)';
+        ringEl.style.borderColor = 'rgba(72, 199, 217, 0.22)';
+        ringEl.style.boxShadow = '0 3px 14px rgba(72, 199, 217, 0.06), inset 0 1px rgba(255, 255, 255, 0.10)';
         ringEl.style.opacity = '1';
       } else {
         ringEl.style.borderRadius = '50%';
@@ -314,21 +375,23 @@ export const VisionOSCursor = memo(function VisionOSCursor() {
         ringEl.style.opacity = '0';
       }
 
-      animationFrameId = requestAnimationFrame(loop);
+      quietFrames = maxMovement < 0.02 ? quietFrames + 1 : 0;
+      if (quietFrames < 3) scheduleLoop();
     };
 
-    loop();
+    scheduleLoop();
 
     return () => {
       cancelAnimationFrame(animationFrameId);
       if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
-      window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener('resize', handleResize);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('pointerover', handlePointerOver);
       window.removeEventListener('pointerout', handlePointerOut);
       window.removeEventListener('scroll', handleScroll, { capture: true });
       document.removeEventListener('mouseleave', handleMouseLeaveDoc);
       document.removeEventListener('mouseenter', handleMouseEnterDoc);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [enabled]);
 
@@ -343,7 +406,7 @@ export const VisionOSCursor = memo(function VisionOSCursor() {
           position: 'fixed',
           inset: 0,
           pointerEvents: 'none',
-          zIndex: 9999,
+          zIndex: 9994,
           mixBlendMode: 'screen',
         }}
       />

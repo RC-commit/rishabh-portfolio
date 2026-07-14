@@ -16,8 +16,8 @@ interface TiltedCardWrapperProps {
 export function TiltedCardWrapper({
     children,
     className = '',
-    maxTilt = 8,
-    scaleOnHover = 1.015,
+    maxTilt = 4,
+    scaleOnHover = 1.01,
     onClick,
     style = {},
     disabled = false,
@@ -33,9 +33,9 @@ export function TiltedCardWrapper({
     const reduceMotion = useReducedMotion() ?? false;
 
     const springValues = {
-        damping: 30,
-        stiffness: 100,
-        mass: 2,
+        damping: 28,
+        stiffness: 180,
+        mass: 1.1,
     };
     const rotateXValue = useMotionValue(0);
     const rotateYValue = useMotionValue(0);

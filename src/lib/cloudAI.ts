@@ -1,5 +1,4 @@
 import { useCallback } from 'react';
-import { getGroundedPortfolioResponse } from './portfolioResponder';
 import { redactPrivateContactData } from './nlp/privacy';
 import { isPortfolioUIAction, type ConversationMessage, type PortfolioUIAction } from './nlp/types';
 
@@ -76,7 +75,8 @@ function conversationRequest(messages: readonly ChatMessage[]) {
   };
 }
 
-function localFallback(message: string, history: readonly ConversationMessage[]): CloudAIResult {
+async function localFallback(message: string, history: readonly ConversationMessage[]): Promise<CloudAIResult> {
+  const { getGroundedPortfolioResponse } = await import('./portfolioResponder');
   const response = getGroundedPortfolioResponse(message, history);
   return {
     body: response.body,

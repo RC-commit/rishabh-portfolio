@@ -1,5 +1,5 @@
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
-import { lazy, Suspense, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { InternalNavigation } from './routes/InternalNavigation';
 import { RouteErrorBoundary } from './routes/RouteErrorBoundary';
 
@@ -31,12 +31,21 @@ function RouteView({ children }: { children: ReactNode }) {
 function PersistentRoutes() {
   const location = useLocation();
   const isPortfolioRoute = location.pathname === '/';
+  const [hasMountedPortfolio, setHasMountedPortfolio] = useState(isPortfolioRoute);
+
+  useEffect(() => {
+    if (!isPortfolioRoute || hasMountedPortfolio) return;
+    const frame = window.requestAnimationFrame(() => setHasMountedPortfolio(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, [hasMountedPortfolio, isPortfolioRoute]);
 
   return (
     <>
-      <div hidden={!isPortfolioRoute} aria-hidden={!isPortfolioRoute}>
-        <RouteView><ChatPortfolio /></RouteView>
-      </div>
+      {hasMountedPortfolio && (
+        <div hidden={!isPortfolioRoute} aria-hidden={!isPortfolioRoute}>
+          <RouteView><ChatPortfolio isActive={isPortfolioRoute} /></RouteView>
+        </div>
+      )}
 
       {!isPortfolioRoute && (
         <Routes location={location}>

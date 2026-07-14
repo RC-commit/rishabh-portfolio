@@ -73,9 +73,9 @@ const IntroSectionMessage = memo(function IntroSectionMessage() {
     const [isHovered, setIsHovered] = useState(false);
 
     const springValues = {
-        damping: 30,
-        stiffness: 100,
-        mass: 2
+        damping: 28,
+        stiffness: 180,
+        mass: 1.1
     };
 
     const rotateX = useSpring(useMotionValue(0), springValues);
@@ -89,7 +89,7 @@ const IntroSectionMessage = memo(function IntroSectionMessage() {
         const offsetX = e.clientX - rect.left - rect.width / 2;
         const offsetY = e.clientY - rect.top - rect.height / 2;
 
-        const rotateAmplitude = 8; // gentle rotation
+        const rotateAmplitude = 4;
         const rotationX = (offsetY / (rect.height / 2)) * -rotateAmplitude;
         const rotationY = (offsetX / (rect.width / 2)) * rotateAmplitude;
 
@@ -111,7 +111,7 @@ const IntroSectionMessage = memo(function IntroSectionMessage() {
 
     function handleMouseEnter() {
         setIsHovered(true);
-        scale.set(1.02);
+        scale.set(1.008);
     }
 
     function handleMouseLeave() {
@@ -178,15 +178,15 @@ const IntroSectionMessage = memo(function IntroSectionMessage() {
                                 </div>
                             </div>
                             <div className="cp-hero-stat-cards">
-                                <TiltedCardWrapper className="cp-hero-stat-card" maxTilt={10} scaleOnHover={1.04}>
+                                <TiltedCardWrapper className="cp-hero-stat-card" maxTilt={4} scaleOnHover={1.012}>
                                     <div className="cp-hsc-val">{USERS_IMPACTED}</div>
                                     <div className="cp-hsc-label">Users Impacted</div>
                                 </TiltedCardWrapper>
-                                <TiltedCardWrapper className="cp-hero-stat-card" maxTilt={10} scaleOnHover={1.04}>
+                                <TiltedCardWrapper className="cp-hero-stat-card" maxTilt={4} scaleOnHover={1.012}>
                                     <div className="cp-hsc-val">↓61%</div>
                                     <div className="cp-hsc-label">Cloud Cost Cut</div>
                                 </TiltedCardWrapper>
-                                <TiltedCardWrapper className="cp-hero-stat-card" maxTilt={10} scaleOnHover={1.04}>
+                                <TiltedCardWrapper className="cp-hero-stat-card" maxTilt={4} scaleOnHover={1.012}>
                                     <div className="cp-hsc-val">{ENGINEERS_MENTORED}</div>
                                     <div className="cp-hsc-label">Engineers Mentored</div>
                                 </TiltedCardWrapper>
@@ -277,7 +277,8 @@ const ProjectCarousel = memo(function ProjectCarousel({ intro }: { intro: string
         const card = el.querySelector('.cp-card-proj') as HTMLElement | null;
         if (!card) return;
         const step = card.offsetWidth + 20;
-        el.scrollBy({ left: dir * step, behavior: 'smooth' });
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        el.scrollBy({ left: dir * step, behavior: reduceMotion ? 'auto' : 'smooth' });
     }, []);
 
     useEffect(() => () => {
@@ -290,7 +291,12 @@ const ProjectCarousel = memo(function ProjectCarousel({ intro }: { intro: string
         <div className="cp-projects-section">
             <div dangerouslySetInnerHTML={{ __html: intro }} />
             <div className="cp-projects-wrapper">
-                <button className="cp-proj-nav cp-prev" aria-label="Previous" onClick={() => handleNav(-1)}>←</button>
+                <button
+                    className="cp-proj-nav cp-prev"
+                    aria-label="Previous project"
+                    disabled={activeIdx === 0}
+                    onClick={() => handleNav(-1)}
+                >←</button>
                 <div
                     className="cp-projects-coverflow"
                     ref={coverflowRef}
@@ -302,8 +308,8 @@ const ProjectCarousel = memo(function ProjectCarousel({ intro }: { intro: string
                             <TiltedCardWrapper
                                 key={p.title}
                                 className={`cp-card-proj${i === activeIdx ? ' cp-active' : ''}`}
-                                maxTilt={8}
-                                scaleOnHover={1.02}
+                                maxTilt={4}
+                                scaleOnHover={1.01}
                                 isActive={i === activeIdx}
                                 keyboardAction={false}
                                 onClick={(e) => {
@@ -316,12 +322,13 @@ const ProjectCarousel = memo(function ProjectCarousel({ intro }: { intro: string
                                         const containerRect = el.getBoundingClientRect();
                                         const cardRect = cardEl.getBoundingClientRect();
                                         const targetScroll = el.scrollLeft + (cardRect.left - containerRect.left) - (containerRect.width - cardRect.width) / 2;
-                                        el.scrollTo({ left: targetScroll, behavior: 'smooth' });
+                                        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                                        el.scrollTo({ left: targetScroll, behavior: reduceMotion ? 'auto' : 'smooth' });
                                     }
                                 }}
                             >
                                 <span className="cp-proj-num">PROJECT {String(i + 1).padStart(3, '0')}</span>
-                                <div className="cp-proj-name">{p.title}</div>
+                                <h2 className="cp-proj-name">{p.title}</h2>
                                 <div className="cp-proj-desc">{p.description}</div>
 
                                 {p.metrics && (
@@ -346,7 +353,7 @@ const ProjectCarousel = memo(function ProjectCarousel({ intro }: { intro: string
                                     {p.tags.map(t => <span key={t} className="cp-proj-pill">{t}</span>)}
                                 </div>
 
-                                <div className="cp-proj-links" style={{ display: 'flex', gap: '8px', marginTop: 'auto', flexWrap: 'wrap', alignItems: 'center' }}>
+                                <div className="cp-proj-links">
                                     <Link to={`/case-studies/${p.slug}`} className="cp-proj-case-study-btn">
                                         Case Study ↗
                                     </Link>
@@ -360,7 +367,12 @@ const ProjectCarousel = memo(function ProjectCarousel({ intro }: { intro: string
                         );
                     })}
                 </div>
-                <button className="cp-proj-nav cp-next" aria-label="Next" onClick={() => handleNav(1)}>→</button>
+                <button
+                    className="cp-proj-nav cp-next"
+                    aria-label="Next project"
+                    disabled={activeIdx === PROJECTS.length - 1}
+                    onClick={() => handleNav(1)}
+                >→</button>
             </div>
         </div>
     );
@@ -370,7 +382,7 @@ interface SkillDomain {
     id: string;
     name: string;
     description: string;
-    accent: 'cyan' | 'violet' | 'blue' | 'green' | 'amber' | 'rose';
+    accent: 'cyan' | 'violet' | 'blue' | 'green';
     categories: string[];
 }
 
@@ -379,7 +391,7 @@ const SKILL_DOMAINS: SkillDomain[] = [
         id: 'leadership-architecture',
         name: 'Leadership & Architecture',
         description: 'Technical direction, system design, and scalable architecture',
-        accent: 'cyan',
+        accent: 'violet',
         categories: ['Leadership', 'Architecture'],
     },
     {
@@ -407,14 +419,14 @@ const SKILL_DOMAINS: SkillDomain[] = [
         id: 'data-messaging',
         name: 'Data & Messaging',
         description: 'Storage, caching, search, and event-driven systems',
-        accent: 'amber',
+        accent: 'cyan',
         categories: ['Databases', 'Events', 'Search'],
     },
     {
         id: 'reliability-tooling',
         name: 'Reliability & Tooling',
         description: 'Observability, performance engineering, and delivery tools',
-        accent: 'rose',
+        accent: 'blue',
         categories: ['Monitoring', 'Performance', 'Tools'],
     },
 ];
@@ -459,7 +471,7 @@ const SkillStackSection = memo(function SkillStackSection({ intro, onShowComplet
             <section ref={completeStackRef} className="cp-stack-directory" aria-labelledby="complete-stack-title">
                 <div className="cp-stack-directory-heading">
                     <div>
-                        <h3 id="complete-stack-title">Complete stack</h3>
+                        <h2 id="complete-stack-title">Complete stack</h2>
                         <p>{SKILLS.length} skills across {skillsByDomain.length} capability areas</p>
                     </div>
                     <span className="cp-stack-total" aria-label={`${SKILLS.length} total skills`}>{SKILLS.length}</span>
@@ -470,7 +482,7 @@ const SkillStackSection = memo(function SkillStackSection({ intro, onShowComplet
                         <section className={`cp-stack-group cp-stack-group--${accent}`} key={id} aria-labelledby={`stack-domain-${id}`}>
                             <div className="cp-stack-group-heading">
                                 <div>
-                                    <h4 id={`stack-domain-${id}`}>{name}</h4>
+                                    <h3 id={`stack-domain-${id}`}>{name}</h3>
                                     <p>{description}</p>
                                 </div>
                                 <span aria-label={`${skills.length} skills`}>{skills.length}</span>
@@ -589,7 +601,7 @@ const QUICK_ACTION_QUESTIONS = {
     availability: 'Is Rishabh currently available for Senior or Lead engineering roles? Please answer directly and share his public contact options.',
 } as const;
 
-function useRotatingPlaceholder(texts: string[], intervalMs = 4200) {
+function useRotatingPlaceholder(texts: string[], intervalMs = 4200, active = true) {
     const [index, setIndex] = useState(0);
 
     useEffect(() => {
@@ -600,7 +612,7 @@ function useRotatingPlaceholder(texts: string[], intervalMs = 4200) {
         const syncRotation = () => {
             if (interval) window.clearInterval(interval);
             interval = undefined;
-            if (!motionQuery.matches) {
+            if (active && !motionQuery.matches) {
                 interval = window.setInterval(() => {
                     setIndex((current) => (current + 1) % texts.length);
                 }, intervalMs);
@@ -613,7 +625,7 @@ function useRotatingPlaceholder(texts: string[], intervalMs = 4200) {
             if (interval) window.clearInterval(interval);
             motionQuery.removeEventListener('change', syncRotation);
         };
-    }, [texts, intervalMs]);
+    }, [active, texts, intervalMs]);
 
     return texts[index % Math.max(texts.length, 1)] ?? '';
 }
@@ -621,7 +633,7 @@ function useRotatingPlaceholder(texts: string[], intervalMs = 4200) {
 // =========================================================
 // Main Component
 // =========================================================
-export default function ChatPortfolio() {
+export default function ChatPortfolio({ isActive = true }: { isActive?: boolean }) {
     const { generateResponse } = useCloudAI();
 
     const [messages, setMessages] = useState<MessageData[]>(() => [{
@@ -637,13 +649,15 @@ export default function ChatPortfolio() {
     const [loadedSections, setLoadedSections] = useState<Set<SectionKey>>(() => new Set(['intro']));
     const inputReady = !isPending;
     const [inputValue, setInputValue] = useState('');
-    const rotatingPlaceholder = useRotatingPlaceholder(PLACEHOLDER_TEXTS);
+    const rotatingPlaceholder = useRotatingPlaceholder(PLACEHOLDER_TEXTS, 4200, isActive);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [cmdOpen, setCmdOpen] = useState(false);
     const [cmdQuery, setCmdQuery] = useState('');
     const feedRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+    const sidebarRef = useRef<HTMLElement>(null);
+    const cmdOverlayRef = useRef<HTMLDivElement>(null);
     const pendingRef = useRef(false);
     const scrollRafRef = useRef<number | null>(null);
     const navigationScrollRafRef = useRef<number | null>(null);
@@ -683,9 +697,10 @@ export default function ChatPortfolio() {
                 // Otherwise, only auto-scroll if the user is already at the bottom and hasn't scrolled up.
                 const isAtBottom = feed.scrollHeight - feed.scrollTop - feed.clientHeight <= 100;
                 if (force || (isAtBottom && !userHasScrolledUpRef.current)) {
+                    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
                     feed.scrollTo({
                         top: feed.scrollHeight,
-                        behavior: force ? 'smooth' : 'auto'
+                        behavior: force && !reduceMotion ? 'smooth' : 'auto'
                     });
                 }
             }
@@ -909,7 +924,8 @@ export default function ChatPortfolio() {
                 const coverflow = card.closest('.cp-projects-coverflow') as HTMLElement | null;
                 if (coverflow) {
                     const targetLeft = card.offsetLeft - ((coverflow.clientWidth - card.clientWidth) / 2);
-                    coverflow.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
+                    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                    coverflow.scrollTo({ left: Math.max(0, targetLeft), behavior: reduceMotion ? 'auto' : 'smooth' });
                 }
                 scrollElementIntoFeed(card, 64);
                 card.classList.add('ai-highlight');
@@ -965,6 +981,7 @@ export default function ChatPortfolio() {
     // Handle chat question
     const askQuestion = useCallback(async (question: string) => {
         if (!inputReady || pendingRef.current || !question.trim()) return;
+        setMobileMenuOpen(false);
         pendingRef.current = true;
         setIsPending(true);
 
@@ -1093,10 +1110,84 @@ export default function ChatPortfolio() {
         return () => document.removeEventListener('keydown', onKey);
     }, [cmdOpen, navigateTo]);
 
-    // Focus cmd input when opened
+    // Keep keyboard focus inside the command palette and restore it on close.
     useEffect(() => {
-        if (cmdOpen) setTimeout(() => cmdInputRef.current?.focus(), 50);
+        if (!cmdOpen) return;
+
+        const previousFocus = document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null;
+        const focusTimer = window.setTimeout(() => cmdInputRef.current?.focus(), 50);
+        const handleTab = (event: KeyboardEvent) => {
+            if (event.key !== 'Tab') return;
+            const focusable = Array.from(
+                cmdOverlayRef.current?.querySelectorAll<HTMLElement>(
+                    'input, button:not(:disabled), a[href], [tabindex]:not([tabindex="-1"])',
+                ) ?? [],
+            ).filter((element) => !element.hasAttribute('hidden'));
+            if (!focusable.length) return;
+
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        };
+
+        document.addEventListener('keydown', handleTab);
+        return () => {
+            window.clearTimeout(focusTimer);
+            document.removeEventListener('keydown', handleTab);
+            if (previousFocus?.isConnected) previousFocus.focus();
+        };
     }, [cmdOpen]);
+
+    // The mobile drawer behaves as a modal for keyboard and assistive-tech users.
+    useEffect(() => {
+        if (!mobileMenuOpen) return;
+
+        const previousFocus = document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null;
+        const focusTimer = window.setTimeout(() => {
+            sidebarRef.current?.querySelector<HTMLElement>('button:not(:disabled)')?.focus();
+        }, 30);
+        const handleDrawerKey = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setMobileMenuOpen(false);
+                return;
+            }
+            if (event.key !== 'Tab') return;
+
+            const focusable = Array.from(
+                sidebarRef.current?.querySelectorAll<HTMLElement>(
+                    'button:not(:disabled), a[href], [tabindex]:not([tabindex="-1"])',
+                ) ?? [],
+            ).filter((element) => !element.hasAttribute('hidden'));
+            if (!focusable.length) return;
+
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        };
+
+        document.addEventListener('keydown', handleDrawerKey);
+        return () => {
+            window.clearTimeout(focusTimer);
+            document.removeEventListener('keydown', handleDrawerKey);
+            if (previousFocus?.isConnected) previousFocus.focus();
+        };
+    }, [mobileMenuOpen]);
 
     // Command palette items
     const cmdItems: CmdItem[] = [
@@ -1148,12 +1239,13 @@ export default function ChatPortfolio() {
 
     return (
         <div className="chat-portfolio" ref={containerRef}>
-            <DottedGridBackground />
-            <VisionOSCursor />
+            <DottedGridBackground active={isActive} />
+            <VisionOSCursor active={isActive} />
 
             {/* ── COMMAND PALETTE ── */}
             {cmdOpen && (
                 <div
+                    ref={cmdOverlayRef}
                     className="cp-cmd-overlay open"
                     onClick={e => { if (e.target === e.currentTarget) setCmdOpen(false); }}
                     role="dialog"
@@ -1203,10 +1295,17 @@ export default function ChatPortfolio() {
                 </div>
             )}
 
-            <div className="cp-app">
+            <div className="cp-app" inert={cmdOpen || undefined}>
                 {/* ── SIDEBAR ── */}
                 {mobileMenuOpen && <div className="cp-mobile-overlay" onClick={() => setMobileMenuOpen(false)} aria-hidden="true" />}
-                <aside id="portfolio-sidebar" className={`cp-sidebar${mobileMenuOpen ? ' mobile-open' : ''}`} aria-label="Portfolio navigation">
+                <aside
+                    ref={sidebarRef}
+                    id="portfolio-sidebar"
+                    className={`cp-sidebar${mobileMenuOpen ? ' mobile-open' : ''}`}
+                    aria-label="Portfolio navigation"
+                    aria-modal={mobileMenuOpen || undefined}
+                    role={mobileMenuOpen ? 'dialog' : undefined}
+                >
                     <div className="cp-sb-logo">
                         <div className="cp-sb-logo-mark">R</div>
                         <div className="cp-sb-logo-copy">
@@ -1223,6 +1322,7 @@ export default function ChatPortfolio() {
                             <button
                                 key={item.key}
                                 className={`cp-sb-nav-item${currentSection === item.key ? ' active' : ''}`}
+                                aria-current={currentSection === item.key ? 'location' : undefined}
                                 onClick={() => navigateTo(item.key)}
                                 type="button"
                             >
@@ -1236,13 +1336,13 @@ export default function ChatPortfolio() {
                     <div className="cp-sb-divider" />
                     <div className="cp-sb-section-label">Quick Actions</div>
                     <div className="cp-sb-actions">
-                        <button className="cp-sb-action-btn" onClick={() => askQuestion(QUICK_ACTION_QUESTIONS.biggestWin)} disabled={isPending} type="button">
+                        <button className="cp-sb-action-btn cp-sb-action-btn--primary" onClick={() => askQuestion(QUICK_ACTION_QUESTIONS.biggestWin)} disabled={isPending} type="button">
                             Biggest win
                         </button>
-                        <button className="cp-sb-action-btn" onClick={() => askQuestion(QUICK_ACTION_QUESTIONS.currentWork)} disabled={isPending} style={{ marginTop: 6 }} type="button">
+                        <button className="cp-sb-action-btn cp-sb-action-btn--info" onClick={() => askQuestion(QUICK_ACTION_QUESTIONS.currentWork)} disabled={isPending} type="button">
                             Current work
                         </button>
-                        <button className="cp-sb-action-btn gold" onClick={() => askQuestion(QUICK_ACTION_QUESTIONS.availability)} disabled={isPending} style={{ marginTop: 6 }} type="button">
+                        <button className="cp-sb-action-btn cp-sb-action-btn--success" onClick={() => askQuestion(QUICK_ACTION_QUESTIONS.availability)} disabled={isPending} type="button">
                             Available for hire?
                         </button>
                     </div>
@@ -1266,7 +1366,7 @@ export default function ChatPortfolio() {
                 </aside>
 
                 {/* ── MAIN CHAT PANEL ── */}
-                <main className="cp-main" role="main">
+                <main className="cp-main" role="main" inert={mobileMenuOpen || undefined}>
                     <div className="cp-topbar apple-glass">
                         <div className="cp-tb-left">
                             <button

@@ -204,7 +204,7 @@ export const TestimonialsSection = memo(function TestimonialsSection() {
       <div className="cp-review-overview">
         <div>
           <div className="cp-review-eyebrow">LinkedIn recommendations</div>
-          <div className="cp-review-summary">Eight perspectives. One consistent signal.</div>
+          <h2 className="cp-review-summary">Eight perspectives. One consistent signal.</h2>
         </div>
         <div className="cp-review-perspectives" aria-label="Reviewer perspectives">
           {PERSPECTIVE_COUNTS.map(({ perspective, count }) => (
@@ -265,7 +265,7 @@ export const TestimonialsSection = memo(function TestimonialsSection() {
                       type="button"
                       title="Previous recommendation"
                       aria-label="Previous recommendation"
-                      onClick={() => selectReview(activeIndex - 1)}
+                      onClick={() => selectReview(activeIndex - 1, true)}
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <path d="m15 18-6-6 6-6" />
@@ -279,7 +279,7 @@ export const TestimonialsSection = memo(function TestimonialsSection() {
                       type="button"
                       title="Next recommendation"
                       aria-label="Next recommendation"
-                      onClick={() => selectReview(activeIndex + 1)}
+                      onClick={() => selectReview(activeIndex + 1, true)}
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <path d="m9 18 6-6-6-6" />

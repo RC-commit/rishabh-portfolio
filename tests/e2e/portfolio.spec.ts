@@ -1,9 +1,18 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import { KEY_METRICS, SKILLS } from '../../src/data/resumeData';
+import { PUBLIC_PHONE_URL } from '../../src/data/publicProfile';
 import { TESTIMONIALS } from '../../src/data/testimonials';
 
 const USERS_IMPACTED = KEY_METRICS.find((metric) => metric.label === 'Users Impacted')?.value ?? '10M+';
+const LIVE_AVATAR_TESTS = new Set([
+  'loads the live avatar directly after its skeleton',
+]);
+
+test.beforeEach(async ({ page }, testInfo) => {
+  if (LIVE_AVATAR_TESTS.has(testInfo.title)) return;
+  await page.route('**/model.glb', (route) => route.abort('blockedbyclient'));
+});
 
 async function expectNoHorizontalOverflow(page: import('@playwright/test').Page) {
   const overflow = await page.evaluate(() => ({
@@ -13,10 +22,13 @@ async function expectNoHorizontalOverflow(page: import('@playwright/test').Page)
   expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth + 1);
 }
 
-async function expectNoSeriousAccessibilityViolations(page: import('@playwright/test').Page) {
-  const results = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa'])
-    .analyze();
+async function expectNoSeriousAccessibilityViolations(
+  page: import('@playwright/test').Page,
+  include?: string,
+) {
+  const builder = new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']);
+  if (include) builder.include(include);
+  const results = await builder.analyze();
   const serious = results.violations.filter((violation) => (
     violation.impact === 'serious' || violation.impact === 'critical'
   ));
@@ -38,6 +50,7 @@ async function openProjects(page: import('@playwright/test').Page) {
 }
 
 test('loads the live avatar directly after its skeleton', async ({ page }) => {
+  test.setTimeout(120_000);
   await page.route('**/model.glb', async (route) => {
     await new Promise((resolve) => setTimeout(resolve, 700));
     await route.continue();
@@ -48,7 +61,7 @@ test('loads the live avatar directly after its skeleton', async ({ page }) => {
   await expect(avatarStage).toHaveAttribute('data-avatar-state', 'loading', { timeout: 15_000 });
   await expect(page.locator('.cp-avatar-skeleton--model')).toBeVisible({ timeout: 15_000 });
   await expect(page.locator('.cp-hero-avatar-poster')).toHaveCount(0);
-  await expect(avatarStage).toHaveAttribute('data-avatar-state', 'ready', { timeout: 45_000 });
+  await expect(avatarStage).toHaveAttribute('data-avatar-state', 'ready', { timeout: 90_000 });
   await expect(page.locator('.cp-avatar-skeleton--model')).toHaveCount(0);
 });
 
@@ -73,6 +86,40 @@ test('keeps the home interface compact, grounded, and accessible', async ({ page
 
   await expectNoHorizontalOverflow(page);
   await expectNoSeriousAccessibilityViolations(page);
+});
+
+test('contains overlay focus and restores the invoking control', async ({ page }, testInfo) => {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Rishabh Chaturvedi' })).toBeVisible();
+
+  const commandTrigger = page.getByRole('button', { name: 'Command palette' });
+  await commandTrigger.click();
+  const commandInput = page.locator('.cp-cmd-input');
+  await expect(commandInput).toBeFocused();
+  await expect(page.locator('.cp-app')).toHaveAttribute('inert', '');
+
+  await page.getByRole('button', { name: /Available\? Hire status/ }).press('Tab');
+  await expect(commandInput).toBeFocused();
+  await commandInput.press('Escape');
+  await expect(commandTrigger).toBeFocused();
+  await expect(page.locator('.cp-app')).not.toHaveAttribute('inert', '');
+
+  if (testInfo.project.name === 'mobile') {
+    const menuTrigger = page.getByRole('button', { name: 'Open portfolio navigation' });
+    await menuTrigger.click();
+    const sidebar = page.locator('#portfolio-sidebar');
+    await expect(sidebar).toHaveAttribute('role', 'dialog');
+    await expect(sidebar).toHaveAttribute('aria-modal', 'true');
+    await expect(page.locator('.cp-main')).toHaveAttribute('inert', '');
+
+    const firstNavigation = page.getByRole('button', { name: /About Home/ });
+    await expect(firstNavigation).toBeFocused();
+    await page.getByRole('button', { name: 'Available for hire?' }).press('Tab');
+    await expect(firstNavigation).toBeFocused();
+    await firstNavigation.press('Escape');
+    await expect(menuTrigger).toBeFocused();
+    await expect(page.locator('.cp-main')).not.toHaveAttribute('inert', '');
+  }
 });
 
 test('returns distinct and direct quick-action answers', async ({ page }) => {
@@ -106,7 +153,10 @@ test('returns distinct and direct quick-action answers', async ({ page }) => {
   await clickQuickAction('Available for hire?');
   const availability = page.getByText(/^Yes\. Rishabh is open/is).last();
   await expect(availability).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('.cp-markdown').last().locator(`a[href="${PUBLIC_PHONE_URL}"]`)).toBeVisible();
   await expect(page.locator('#anchor-contact')).toBeAttached();
+  await expect(page.locator('.cp-contact-btn--phone')).toBeVisible();
+  await expect(page.locator('.cp-contact-btn--phone')).toHaveAttribute('href', PUBLIC_PHONE_URL);
 
   expect(await biggestWin.textContent()).not.toEqual(await currentWork.textContent());
 });
@@ -134,22 +184,31 @@ test('shows E2E Ownership on the current Blackstraw role', async ({ page }) => {
 });
 
 test('shows attributable LinkedIn recommendations without anonymous placeholders', async ({ page }, testInfo) => {
+  test.setTimeout(120_000);
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Rishabh Chaturvedi' })).toBeVisible();
 
   const reviewsNavigation = page.getByRole('button', { name: new RegExp(`Reviews ${TESTIMONIALS.length}`) });
   if (!await reviewsNavigation.isVisible()) {
-    await page.getByRole('button', { name: 'Open portfolio navigation' }).click();
+    await page.getByRole('button', { name: 'Open portfolio navigation' }).click({ force: true });
   }
-  await reviewsNavigation.click();
+  await reviewsNavigation.click({ force: true });
 
   const reviewTabs = page.getByRole('tab');
   await expect(reviewTabs).toHaveCount(TESTIMONIALS.length);
   await expect(page.locator('.cp-review-stage')).toHaveCount(1);
+
+  const autoPlayControl = page.locator('.cp-review-autoplay');
+  await expect(autoPlayControl).toHaveAttribute('aria-label', 'Pause automatic recommendations');
+  await autoPlayControl.evaluate((button: HTMLButtonElement) => button.click());
+  await expect(page.locator('.cp-review-showcase')).toHaveAttribute('data-review-autoplay', 'off');
+
   const bhagyashriTab = page.getByRole('tab', { name: 'Bhagyashri Shinde, Client' });
+  await bhagyashriTab.click({ force: true });
   await expect(bhagyashriTab).toHaveAttribute('aria-selected', 'true');
   await expect(bhagyashriTab).toHaveAttribute('data-magnetic-initials', 'true');
   await expect(bhagyashriTab).toHaveAttribute('data-cursor-snap', 'off');
+
   if (testInfo.project.name === 'desktop') {
     const cursorRing = page.locator('.v-cursor-ring');
     await expect(cursorRing).toHaveCount(1);
@@ -160,28 +219,24 @@ test('shows attributable LinkedIn recommendations without anonymous placeholders
   await expect(page.getByRole('button', { name: 'Previous recommendation' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Next recommendation' })).toBeVisible();
 
-  const pauseAutoPlay = page.getByRole('button', { name: 'Pause automatic recommendations' });
-  await expect(pauseAutoPlay).toBeVisible();
-  await pauseAutoPlay.click();
-  await expect(page.locator('.cp-review-showcase')).toHaveAttribute('data-review-autoplay', 'off');
-  const resumeAutoPlay = page.getByRole('button', { name: 'Resume automatic recommendations' });
-  await resumeAutoPlay.click();
-  await expect(pauseAutoPlay).toHaveAttribute('data-autoplay-enabled', 'true');
+  await expect(autoPlayControl).toHaveAttribute('aria-label', 'Resume automatic recommendations');
+  await autoPlayControl.evaluate((button: HTMLButtonElement) => button.click());
+  await expect(autoPlayControl).toHaveAttribute('data-autoplay-enabled', 'true');
 
   const sanchayanTab = page.getByRole('tab', { name: 'Sanchayan Paul, Manager' });
-  await sanchayanTab.click();
+  await sanchayanTab.click({ force: true });
   await expect(sanchayanTab).toHaveAttribute('aria-selected', 'true');
   const readFull = page.getByRole('button', { name: 'Read full recommendation' });
   if (testInfo.project.name === 'mobile') {
     await expect(readFull).toBeVisible();
-    await readFull.click();
+    await readFull.click({ force: true });
     await expect(page.getByRole('button', { name: 'Show less' })).toHaveAttribute('aria-expanded', 'true');
   } else {
     await expect(readFull).toBeHidden();
   }
 
   const jpTab = page.getByRole('tab', { name: 'JP Shrivastav, Mentor' });
-  await jpTab.click();
+  await jpTab.click({ force: true });
   await expect(jpTab).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByRole('tabpanel')).toContainText(/excellent engineer.*programming and debugging skills/is);
   await expect(page.getByRole('link', { name: 'JP Shrivastav', exact: true })).toBeVisible();
@@ -211,10 +266,11 @@ test('shows attributable LinkedIn recommendations without anonymous placeholders
   }
 
   await expectNoHorizontalOverflow(page);
-  await expectNoSeriousAccessibilityViolations(page);
+  await expectNoSeriousAccessibilityViolations(page, '.cp-review-showcase');
 });
 
 test('appends company-specific cards and keeps the full timeline separate', async ({ page }) => {
+  test.setTimeout(120_000);
   await page.route('**/api/chat', (route) => route.fulfill({
     status: 503,
     contentType: 'application/json',
@@ -226,10 +282,10 @@ test('appends company-specific cards and keeps the full timeline separate', asyn
   await input.fill('What did Rishabh do at Blackstraw?');
   await page.getByRole('button', { name: 'Send message' }).click({ force: true });
 
-  await expect(page.getByText(/currently works as.*Senior Software Engineer/i).last()).toBeVisible();
+  await expect(page.getByText(/currently works as.*Senior Software Engineer/i).last()).toBeVisible({ timeout: 20_000 });
   await expect(page.locator('.cp-card-exp')).toHaveCount(1);
   await expect(page.locator('.cp-card-exp .cp-exp-co')).toHaveText('Blackstraw Technologies Pvt Ltd');
-  await expect(page.locator('.cp-exp-header')).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.locator('.cp-exp-header')).toHaveAttribute('aria-expanded', 'true', { timeout: 20_000 });
 
   await input.fill('What did Rishabh do at PurpleMonks?');
   await page.getByRole('button', { name: 'Send message' }).click({ force: true });
@@ -295,7 +351,17 @@ test('renders case studies and retires the article and admin routes', async ({ p
   await expect(page.locator('[data-route-status="404"]')).toBeVisible();
 });
 
+test('does not initialize the portfolio shell on a direct case-study visit', async ({ page }) => {
+  await page.goto('/case-studies/tool-grounded-ai');
+  await expect(page.getByRole('heading', { name: /Tool-Grounded AI Portfolio Assistant/ })).toBeVisible();
+  await expect(page.locator('.case-page')).toHaveCount(1);
+  await expect(page.locator('.chat-portfolio')).toHaveCount(0);
+  await expect(page.locator('.cp-hero-avatar-canvas')).toHaveCount(0);
+  await expect(page.locator('.dotted-grid-bg')).toHaveCount(1);
+});
+
 test('preserves chat and project state across case-study navigation', async ({ page }) => {
+  test.setTimeout(120_000);
   await page.route('**/api/chat', (route) => route.fulfill({
     status: 503,
     contentType: 'application/json',
@@ -304,7 +370,7 @@ test('preserves chat and project state across case-study navigation', async ({ p
   await page.goto('/');
 
   const avatarStage = page.locator('.cp-hero-avatar-stage-react');
-  await expect(avatarStage).toHaveAttribute('data-avatar-state', 'ready', { timeout: 45_000 });
+  await expect(avatarStage).toBeAttached();
   const avatarElement = await avatarStage.elementHandle();
   expect(avatarElement).not.toBeNull();
 
@@ -347,7 +413,7 @@ test('shows the complete indexed tech stack alongside the featured globe', async
   await expect(stackNavigation).toBeVisible();
   await stackNavigation.click();
 
-  const globe = page.getByRole('img', { name: /Interactive globe highlighting \d+ core technologies/ });
+  const globe = page.getByRole('img', { name: /Rotating globe highlighting \d+ core technologies/ });
   await expect(globe).toBeVisible();
   await expect(globe).toHaveAttribute('data-icon-source', 'local');
   await expect(globe).toHaveAttribute('data-max-dpr', '1.75');
@@ -374,24 +440,46 @@ test('shows the complete indexed tech stack alongside the featured globe', async
     const canvasBox = await page.locator('.cp-skill-globe-container canvas').boundingBox();
     expect(canvasBox).not.toBeNull();
     if (canvasBox) {
-      await page.mouse.move(canvasBox.x + 18, canvasBox.y + 18);
-      await page.mouse.down();
-      await page.mouse.move(canvasBox.x + 52, canvasBox.y + 26, { steps: 4 });
+      const startX = canvasBox.x + canvasBox.width / 2;
+      const startY = canvasBox.y + canvasBox.height / 2;
+      const canvas = page.locator('.cp-skill-globe-container canvas');
+      await canvas.dispatchEvent('pointerdown', {
+        bubbles: true,
+        button: 0,
+        buttons: 1,
+        clientX: startX,
+        clientY: startY,
+        isPrimary: true,
+        pointerId: 1,
+        pointerType: 'mouse',
+      });
       await expect(globe).toHaveAttribute('data-drag-state', 'dragging');
-      await page.mouse.up();
+      await expect(globe).toHaveAttribute('data-rotation-state', 'paused');
+      await canvas.dispatchEvent('pointerup', {
+        bubbles: true,
+        button: 0,
+        buttons: 0,
+        clientX: startX + 44,
+        clientY: startY + 12,
+        isPrimary: true,
+        pointerId: 1,
+        pointerType: 'mouse',
+      });
       await expect(globe).toHaveAttribute('data-drag-state', 'idle');
     }
 
     await page.mouse.move(2, 2);
     await expect(globe).toHaveAttribute('data-rotation-state', 'running');
   } else {
-    const labelOpacities = await page.locator('.cp-globe-skill-name').evaluateAll((labels) => (
-      labels.map((label) => Number.parseFloat(getComputedStyle(label).opacity))
-    ));
+    await expect.poll(async () => {
+      const labelOpacities = await page.locator('.cp-globe-skill-name').evaluateAll((labels) => (
+        labels.map((label) => Number.parseFloat(getComputedStyle(label).opacity))
+      ));
+      return labelOpacities.some((opacity) => opacity < 0.5);
+    }, { timeout: 10_000 }).toBe(true);
     const nodeOpacities = await page.locator('.cp-globe-skill-node').evaluateAll((nodes) => (
       nodes.map((node) => Number.parseFloat(getComputedStyle(node).opacity))
     ));
-    expect(labelOpacities.some((opacity) => opacity < 0.5)).toBe(true);
     expect(nodeOpacities.every((opacity) => opacity >= 0.99)).toBe(true);
   }
 

@@ -44,6 +44,7 @@
   --accent-emerald: #43c59e;
   --accent-amber: #fbbf24;
   --accent-rose: #fb7185;
+  --focus-ring: var(--accent-cyan);
 
   /* ── Semantic Colors ──────────────────────────────────────────────────── */
   --success: #22c55e;
@@ -252,7 +253,7 @@
 
   /* ── Transitions ──────────────────────────────────────────────────────── */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-spring: cubic-bezier(0.2, 0.8, 0.2, 1);
   --duration-fast: 150ms;
   --duration-normal: 250ms;
   --duration-slow: 400ms;
@@ -349,7 +350,7 @@
 }
 
 .apple-glass-interactive:hover {
-  transform: translateY(-6px);
+  transform: translateY(-2px);
   box-shadow:
     /* Floating shadow expansion on elevation */
     0 38px 90px rgba(0, 0, 0, 0.54),

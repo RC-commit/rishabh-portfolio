@@ -11,8 +11,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test",
-    "release:check": "npm run lint && npm run check:api && npm run test && npm run build && npm run test:e2e"
+    "test:e2e": "npm run build && playwright test",
+    "release:check": "npm run lint && npm run check:api && npm run test && npm run test:e2e"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",

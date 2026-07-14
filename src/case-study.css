@@ -13,7 +13,7 @@
 }
 
 .art-page :is(a, button, input, textarea, select):focus-visible {
-    outline: 2px solid var(--accent-cyan);
+    outline: 2px solid var(--focus-ring);
     outline-offset: 3px;
     box-shadow: none;
 }
@@ -104,7 +104,7 @@
     gap: 6px;
     padding: 10px 18px;
     border: 1px solid var(--lg-rim);
-    border-radius: 10px;
+    border-radius: var(--lg-radius-control);
     background: var(--lg-control-fill);
     color: var(--lg-text);
     box-shadow:
@@ -114,13 +114,26 @@
     -webkit-backdrop-filter: var(--lg-filter-control);
     font: 500 0.85rem var(--font-sans);
     cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    transition:
+      background 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+      border-color 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+      box-shadow 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+      color 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .art-action-btn:hover {
     border-color: var(--lg-rim-strong);
     background: var(--lg-card-fill-hover);
     color: #fff;
+    box-shadow:
+      0 10px 28px rgba(0, 0, 0, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.42);
+}
+
+.art-action-btn:active,
+.art-back-btn-capsule:active {
+    filter: brightness(0.94);
+    transition-duration: 0.12s;
 }
 
 .art-action-btn--linkedin {
@@ -175,7 +188,7 @@
 .case-title {
     max-width: 860px;
     margin: 0;
-    background: linear-gradient(110deg, var(--text-primary) 12%, var(--accent-violet) 68%, var(--accent-cyan));
+    background: linear-gradient(110deg, #ffffff 8%, #dbe9ef 58%, #9fc9d7 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: var(--text-primary);
@@ -219,7 +232,7 @@
 .case-metric,
 .case-panel {
     border: 1px solid rgba(255, 255, 255, 0.14) !important;
-    border-radius: 8px;
+    border-radius: var(--radius-xl);
     background: var(--lg-card-fill) !important;
     box-shadow:
       0 12px 34px rgba(0, 0, 0, 0.24),

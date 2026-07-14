@@ -48,8 +48,8 @@ function SkillIcon({ skill, position, isHovered, isCompact, onHover }: SkillIcon
     const opacity = THREE.MathUtils.lerp(0.35, 1, frontDepth);
     const scale = THREE.MathUtils.lerp(0.8, 1.1, frontDepth);
     const isBack = normalizedRearDepth > 0.75;
-    const compactRearFade = THREE.MathUtils.smoothstep(normalizedRearDepth, 0, 0.55);
-    const compactLabelOpacity = THREE.MathUtils.lerp(0.95, 0.03, compactRearFade);
+    const compactDepthFade = THREE.MathUtils.smoothstep(normalizedRearDepth, 0, 0.35);
+    const compactLabelOpacity = THREE.MathUtils.lerp(0.92, 0.025, compactDepthFade);
 
     // Compact layouts retain every icon and fade only labels on the rear hemisphere.
     divRef.current.style.opacity = isCompact || isHovered ? '1' : opacity.toString();
@@ -70,7 +70,7 @@ function SkillIcon({ skill, position, isHovered, isCompact, onHover }: SkillIcon
       <Html center distanceFactor={10} zIndexRange={[100, 0]}>
         <div
           ref={divRef}
-          className={`cp-globe-skill-node ${isHovered ? 'hovered' : ''}`}
+          className={`cp-globe-skill-node${isCompact ? ' is-compact' : ''}${isHovered ? ' hovered' : ''}`}
           onPointerEnter={() => onHover(true)}
           onPointerLeave={() => onHover(false)}
           style={{ pointerEvents: 'auto' }}
@@ -214,6 +214,16 @@ export function SkillGlobe() {
     return () => document.removeEventListener('visibilitychange', updatePageVisibility);
   }, []);
 
+  useEffect(() => {
+    const finishDrag = () => setIsDragging(false);
+    window.addEventListener('pointerup', finishDrag, { passive: true });
+    window.addEventListener('pointercancel', finishDrag, { passive: true });
+    return () => {
+      window.removeEventListener('pointerup', finishDrag);
+      window.removeEventListener('pointercancel', finishDrag);
+    };
+  }, []);
+
   const shouldRenderFrames = isInViewport && isPageVisible;
   const autoRotationPaused = !shouldRenderFrames || isPointerHovering || isDragging;
 
@@ -222,7 +232,7 @@ export function SkillGlobe() {
       ref={containerRef}
       className="cp-skill-globe-container"
       role="img"
-      aria-label={`Interactive globe highlighting ${GLOBE_SKILLS.length} core technologies`}
+      aria-label={`Rotating globe highlighting ${GLOBE_SKILLS.length} core technologies`}
       data-render-state={shouldRenderFrames ? 'active' : 'paused'}
       data-rotation-state={autoRotationPaused ? 'paused' : 'running'}
       data-drag-state={isDragging ? 'dragging' : 'idle'}
@@ -231,6 +241,10 @@ export function SkillGlobe() {
       onPointerEnter={(event) => {
         if (event.pointerType === 'mouse') setIsPointerHovering(true);
       }}
+      onPointerDown={(event) => {
+        if (event.pointerType !== 'mouse' || event.button === 0) setIsDragging(true);
+      }}
+      onPointerUp={() => setIsDragging(false)}
       onPointerLeave={() => setIsPointerHovering(false)}
       onPointerCancel={() => {
         setIsPointerHovering(false);
